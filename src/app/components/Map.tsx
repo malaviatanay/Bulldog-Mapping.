@@ -39,11 +39,11 @@ export default function Map() {
 
   return (
     <>
-      <div className="absolute top-4 left-4 bg-white p-4 w-xs rounded-lg inset-shadow-2xs  shadow-sm border-1 border-neutral-300 z-10">
+      {/* <div className="absolute top-4 left-4 bg-white p-4 w-xs rounded-lg inset-shadow-2xs  shadow-sm border-1 border-neutral-300 z-10">
         <div>Longitude: {center[0].toFixed(5)}</div>
         <div>Latitude: {center[1].toFixed(5)}</div>
-        <div>Zoom: {zoom.toFixed(2)}</div>
-      </div>
+        <div>Zoom: {zoom.toFixed(2)}</div> 
+      </div> */}
       <div
         ref={mapContainerRef}
         id="map-container"
