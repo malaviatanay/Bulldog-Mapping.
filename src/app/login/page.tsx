@@ -19,7 +19,7 @@ export default function App() {
           Sign In
         </h1>
         <img
-          className="h-36 w-full object-contain mx-auto"
+          className="h-12 w-full object-contain mx-auto"
           src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png"
           alt="google image"
         />
@@ -27,7 +27,7 @@ export default function App() {
           Sign in to access user features.
         </p>
         <form>
-          <button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md w-full transition duration-300 ease-in-out" formAction={loginWithGoogle}>Sign in with Google</button>
+          <button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md w-full transition duration-300 ease-in-out" formAction={loginWithGoogle}>Sign in with Ggit oogle</button>
         </form>
       </div>
     </div>
