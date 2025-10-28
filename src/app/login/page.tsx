@@ -27,7 +27,7 @@ export default function App() {
           Sign in to access user features.
         </p>
         <form>
-          <button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md w-full transition duration-300 ease-in-out" formAction={loginWithGoogle}>Sign in with Ggit oogle</button>
+          <button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md w-full transition duration-300 ease-in-out" formAction={loginWithGoogle}>Sign in with Google</button>
         </form>
       </div>
     </div>
