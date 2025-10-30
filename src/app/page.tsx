@@ -1,4 +1,5 @@
 import Map from "./components/Map";
+import EventCreator from "./components/EventCreator";
 
 export default function Home() {
   return (
