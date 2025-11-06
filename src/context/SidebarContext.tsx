@@ -19,7 +19,7 @@ type SidebarProviderProps = {
 
 export function SidebarProvider({ children }: SidebarProviderProps) {
   const [view, setView] = useState<SidebarView>("search");
-  const [isOpen, setIsOpen] = useState<boolean>(true);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 

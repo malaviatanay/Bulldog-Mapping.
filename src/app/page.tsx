@@ -3,6 +3,8 @@ import Map from "./components/Map";
 import { MapProvider } from "@/context/MapContext";
 import MapTest from "./components/MapTest";
 import { SidebarProvider } from "@/context/SidebarContext";
+import Sidebar from "./components/navigation/Sidebar";
+import Navbar from "./components/navigation/Navbar";
 
 export default async function Home() {
   const buildingData = getBuildings();
@@ -17,14 +19,18 @@ export default async function Home() {
   console.log(events);
   console.log(buildingPolygons);
   return (
-    <div className="h-lvh relative w-full">
+    <div className="max-h-dvh h-dvh relative w-full">
       <MapProvider
         buildings={buildings}
         events={events}
         buildingPolygons={buildingPolygons}
       >
         <SidebarProvider>
-          <MapTest></MapTest>
+          <Navbar></Navbar>
+          <main className="h-full w-full relative">
+            <Sidebar></Sidebar>
+            <MapTest></MapTest>
+          </main>
         </SidebarProvider>
         {/* <Map></Map> */}
       </MapProvider>

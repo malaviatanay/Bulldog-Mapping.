@@ -127,7 +127,7 @@ export default function MapTest() {
           const feature = e.features[0];
           const buildingId = feature.properties?.buildingId;
 
-          if (buildingId) {
+          if (buildingId && mapRef.current) {
             // Find the full building data using the buildingId
             const building = buildings.find(b => b.id === buildingId);
 
@@ -136,6 +136,29 @@ export default function MapTest() {
               setSelectedBuilding(building);
               setView('building'); // Switch sidebar to building view
               setIsOpen(true); // Ensure sidebar is open
+
+              // Get the center of the clicked building using Mapbox's getBounds
+              const bounds = new mapboxgl.LngLatBounds();
+
+              if (feature.geometry.type === 'Polygon') {
+                feature.geometry.coordinates[0].forEach((coord: number[]) => {
+                  bounds.extend(coord as [number, number]);
+                });
+              } else if (feature.geometry.type === 'MultiPolygon') {
+                feature.geometry.coordinates.forEach((polygon: number[][][]) => {
+                  polygon[0].forEach((coord: number[]) => {
+                    bounds.extend(coord as [number, number]);
+                  });
+                });
+              }
+
+              // Fly to the center of the building with smooth animation
+              mapRef.current.flyTo({
+                center: bounds.getCenter(),
+                zoom: 17,
+                duration: 1000,
+                essential: true
+              });
             }
           }
         }
@@ -153,6 +176,18 @@ export default function MapTest() {
 
             if (event) {
               console.log('Event clicked:', event);
+              setSelectedEvent(event);
+              setView('event'); // Switch sidebar to event view
+              setIsOpen(true); // Ensure sidebar is open
+              
+              // Fly to the event location with smooth animation
+              if(mapRef.current)
+              mapRef.current.flyTo({
+                center: [event.longitude, event.latitude],
+                zoom: 17,
+                duration: 1000,
+                essential: true
+              });
             }
           }
         }
