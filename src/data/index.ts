@@ -9,7 +9,7 @@ export async function getBuildingPolygons() {
       geojson,
       building_id 
     `);
-  if (error) return error;
+  if (error) throw error;
 
   return data;
 }
