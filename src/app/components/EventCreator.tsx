@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 
 export default function EventCreator() {
@@ -8,12 +9,12 @@ export default function EventCreator() {
     isApproved: false,
     markerLat: "",
     markerLng: "",
-    buildingIDs: "",
+    buildingName: "",
     datePosted: "",
-    creatorId: "",
+    creatorName: "",
   });
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
@@ -21,17 +22,13 @@ export default function EventCreator() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const formattedData = {
       ...formData,
       otherNames: formData.otherNames.split(",").map((n) => n.trim()),
       metaTags: formData.metaTags.split(",").map((t) => t.trim()),
-      buildingIDs: formData.buildingIDs
-        .split(",")
-        .map((id) => parseInt(id.trim()))
-        .filter((id) => !isNaN(id)),
       markerCords: [
         parseFloat(formData.markerLng),
         parseFloat(formData.markerLat),
@@ -100,13 +97,25 @@ export default function EventCreator() {
           />
         </div>
 
-        <input
-          name="buildingIDs"
-          value={formData.buildingIDs}
+        {/* Building dropdown */}
+        <select
+          name="buildingName"
+          value={formData.buildingName}
           onChange={handleChange}
-          placeholder="Building IDs (comma-separated)"
-          className="w-full p-2 border rounded"
-        />
+          className="w-full p-2 border rounded bg-white"
+        >
+          <option value="">Select Building</option>
+          <option value="Fresno State Library">Henry Madden Library</option>
+          <option value="Engineering East">Engineering East</option>
+          <option value="Science 1">Science 1</option>
+          <option value="Science 2">Science 2</option>
+          <option value="Peters Business Building">Peters Business Building</option>
+          <option value="University Student Union">University Student Union</option>
+          <option value="Music Building">Music Building</option>
+          <option value="North Gym">North Gym</option>
+          <option value="South Gym">South Gym</option>
+          <option value="Bulldog Stadium">Bulldog Stadium</option>
+        </select>
 
         <input
           type="date"
@@ -117,10 +126,10 @@ export default function EventCreator() {
         />
 
         <input
-          name="creatorId"
-          value={formData.creatorId}
+          name="creatorName"
+          value={formData.creatorName}
           onChange={handleChange}
-          placeholder="Creator ID"
+          placeholder="Creator Name"
           className="w-full p-2 border rounded"
         />
 

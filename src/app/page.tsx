@@ -11,7 +11,10 @@ export default async function Home() {
 
   return (
     <div className="h-lvh relative w-full">
-      <Map></Map>
+      <Map>
+
+      </Map>
+      <EventCreator></EventCreator>
     </div>
   );
 }
