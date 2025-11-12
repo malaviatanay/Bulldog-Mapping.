@@ -1,5 +1,5 @@
-'use client'
-import React, { createContext, useContext, useState } from "react"
+"use client";
+import React, { createContext, useContext, useState } from "react";
 import { Tables } from "@/types/supabase";
 
 const MapContext = createContext<MapContextType | null>(null);
@@ -16,6 +16,8 @@ type FilterState = {
   };
 };
 
+type MapPointerEvents = "all" | "dropPin" | "none";
+
 type MapContextType = {
   buildings: Building[];
   events: Event[];
@@ -23,7 +25,11 @@ type MapContextType = {
   selectedBuilding: Building | null;
   selectedEvent: Event | null;
   searchQuery: string;
+  lastClickedCords?: [number, number] | null;
+  mapPointerEvents: MapPointerEvents;
   filters: FilterState;
+  setLastClickedCords: (cords: [number, number] | null) => void;
+  setMapPointerEvents: (mode: MapPointerEvents) => void;
   setSelectedBuilding: (building: Building | null) => void;
   setSelectedEvent: (event: Event | null) => void;
   setSearchQuery: (query: string) => void;
@@ -37,10 +43,22 @@ type MapProviderProps = {
   buildingPolygons: BuildingPolygon[];
 };
 
-export function MapProvider({ children, buildings, events, buildingPolygons }: MapProviderProps) {
-  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
+export function MapProvider({
+  children,
+  buildings,
+  events,
+  buildingPolygons,
+}: MapProviderProps) {
+  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(
+    null
+  );
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [mapPointerEvents, setMapPointerEvents] =
+    useState<MapPointerEvents>("all");
+  const [lastClickedCords, setLastClickedCords] = useState<
+    [number, number] | null
+  >(null);
   const [filters, setFilters] = useState<FilterState>({
     tags: [],
     dateRange: undefined,
@@ -54,6 +72,10 @@ export function MapProvider({ children, buildings, events, buildingPolygons }: M
     selectedEvent,
     searchQuery,
     filters,
+    mapPointerEvents,
+    lastClickedCords,
+    setLastClickedCords,
+    setMapPointerEvents,
     setSelectedBuilding,
     setSelectedEvent,
     setSearchQuery,

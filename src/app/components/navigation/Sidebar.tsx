@@ -1,24 +1,30 @@
 "use client";
 
 import { useSidebar } from "@/context/SidebarContext";
+import { useMapContext } from "@/context/MapContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import BuildingCard from "../sidebar/BuildingCard";
 import EventCard from "../sidebar/EventCard";
 import SearchBar from "../SearchBar";
+import EventCreator from "../EventCreator";
 
 export default function Sidebar() {
   const { isOpen, setIsOpen, view, setView } = useSidebar();
+  const { mapPointerEvents } = useMapContext();
+  const isDropPinMode = mapPointerEvents === "dropPin";
+
   return (
     <aside
-      className={`absolute p-0 mt-19 sm:mt-0 h-[calc(100dvh-78px)] sm:py-6 sm:pl-6 sm:top-0 transition-transform duration-300 ease-out-5 w-full sm:w-fit z-40 left-0 sm:h-full top-0 ${
+      className={`absolute p-0 mt-19 sm:mt-0 h-[calc(100dvh-78px)] sm:py-4 sm:pl-4 sm:top-0 transition-transform duration-350 ease-out-4 w-full sm:w-fit z-40 left-0 sm:h-full top-0 ${
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
       <button
+        disabled={isDropPinMode}
         onClick={() => {
           setIsOpen(!isOpen);
         }}
-        className="hidden z-50 pointer-events-auto sm:block absolute hover:scale-105 active:scale-95 transition-transform duration-150 ease-out-2 overflow-clip top-2/4 cursor-pointer w-fit h-fit left-full bg-highlight hover:bg-highlight-hover border-2 rounded-tr-md rounded br-md border-highlight-hover"
+        className={`hidden button-depth z-50 pointer-events-auto sm:block !absolute hover:scale-105 active:scale-95 transition-[transform_opacity] duration-150 ease-out-2 overflow-clip top-2/4 w-fit h-fit left-full bg-highlight hover:bg-highlight-hover border-1 rounded-tr-md rounded br-md border-highlight-hover ${isDropPinMode ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}
       >
         <span className=" text-white opacity-100 grid items-center w-7 h-10 justify-center grid-cols-1 grid-rows-1 ">
           <ChevronRight
@@ -42,6 +48,7 @@ export default function Sidebar() {
         {view === "building" && <BuildingCard></BuildingCard>}
         {view === "event" && <EventCard></EventCard>}
         {view === "search" && <SearchBar></SearchBar>}
+        {view === "eventCreator" && <EventCreator></EventCreator>}
       </menu>
     </aside>
   );
