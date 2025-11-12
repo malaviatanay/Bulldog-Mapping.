@@ -1,20 +1,39 @@
-import { getBuildings, getEvents } from "@/data";
+import { getBuildingPolygons, getBuildings, getEvents } from "@/data";
 import Map from "./components/Map";
-import EventCreator from "./components/EventCreator";
+import { MapProvider } from "@/context/MapContext";
+import MapTest from "./components/MapTest";
+import { SidebarProvider } from "@/context/SidebarContext";
+import Sidebar from "./components/navigation/Sidebar";
+import Navbar from "./components/navigation/Navbar";
 
 export default async function Home() {
   const buildingData = getBuildings();
   const eventData = getEvents();
-  const [buildings, events] = await Promise.all([buildingData, eventData]);
+  const buildingPolygonData = getBuildingPolygons();
+  const [buildings, events, buildingPolygons] = await Promise.all([
+    buildingData,
+    eventData,
+    buildingPolygonData,
+  ]);
   console.log(buildings);
   console.log(events);
-
+  console.log(buildingPolygons);
   return (
-    <div className="h-lvh relative w-full">
-      <Map>
-
-      </Map>
-      <EventCreator></EventCreator>
+    <div className="max-h-dvh h-dvh relative w-full">
+      <MapProvider
+        buildings={buildings}
+        events={events}
+        buildingPolygons={buildingPolygons}
+      >
+        <SidebarProvider>
+          <Navbar></Navbar>
+          <main className="h-full w-full relative">
+            <Sidebar></Sidebar>
+            <MapTest></MapTest>
+          </main>
+        </SidebarProvider>
+        {/* <Map></Map> */}
+      </MapProvider>
     </div>
   );
 }
