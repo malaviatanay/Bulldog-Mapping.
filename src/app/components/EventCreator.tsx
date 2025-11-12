@@ -1,25 +1,42 @@
 "use client";
 import { useState } from "react";
+import { X } from "lucide-react";
 
 export default function EventCreator() {
   const [formData, setFormData] = useState({
     name: "",
-    otherNames: "",
-    metaTags: "",
-    isApproved: false,
+    description: "",
     markerLat: "",
     markerLng: "",
-    buildingName: "",
-    datePosted: "",
-    creatorName: "",
+    dateStart: "",
+    timeStart: "",
+    dateEnd: "",
+    timeEnd: "",
   });
 
+  const [metaTags, setMetaTags] = useState<string[]>([]);
+  const [currentTag, setCurrentTag] = useState("");
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     });
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && currentTag.trim()) {
+      e.preventDefault();
+      if (!metaTags.includes(currentTag.trim())) {
+        setMetaTags([...metaTags, currentTag.trim()]);
+      }
+      setCurrentTag("");
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setMetaTags(metaTags.filter(tag => tag !== tagToRemove));
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -27,8 +44,7 @@ export default function EventCreator() {
 
     const formattedData = {
       ...formData,
-      otherNames: formData.otherNames.split(",").map((n) => n.trim()),
-      metaTags: formData.metaTags.split(",").map((t) => t.trim()),
+      metaTags,
       markerCords: [
         parseFloat(formData.markerLng),
         parseFloat(formData.markerLat),
@@ -40,8 +56,8 @@ export default function EventCreator() {
   };
 
   return (
-    <div className="max-w-lg mx-auto p-6 bg-white rounded-2xl shadow-md mt-6">
-      <h2 className="text-2xl font-bold mb-4 text-center text-blue-700">
+    <div className="max-w-lg mx-auto p-6 bg-white rounded-2xl border border-neutral-200 mt-6">
+      <h2 className="text-2xl font-bold mb-4 text-center text-highlight">
         Create an Event
       </h2>
 
@@ -51,33 +67,46 @@ export default function EventCreator() {
           value={formData.name}
           onChange={handleChange}
           placeholder="Event Name"
-          className="w-full p-2 border rounded"
+          className="w-full p-2 border border-neutral-200 rounded-lg outline-none focus:border-highlight transition-colors duration-150 ease-out-2"
         />
 
-        <input
-          name="otherNames"
-          value={formData.otherNames}
+        <textarea
+          name="description"
+          value={formData.description}
           onChange={handleChange}
-          placeholder="Other Names (comma-separated)"
-          className="w-full p-2 border rounded"
+          placeholder="Event Description"
+          rows={3}
+          className="w-full p-2 border border-neutral-200 rounded-lg outline-none focus:border-highlight transition-colors duration-150 ease-out-2 resize-none"
         />
 
-        <input
-          name="metaTags"
-          value={formData.metaTags}
-          onChange={handleChange}
-          placeholder="Tags (e.g., Music, Campus, Club)"
-          className="w-full p-2 border rounded"
-        />
-
-        <div className="flex items-center space-x-2">
+        {/* Tag Input */}
+        <div>
           <input
-            type="checkbox"
-            name="isApproved"
-            checked={formData.isApproved}
-            onChange={handleChange}
+            value={currentTag}
+            onChange={(e) => setCurrentTag(e.target.value)}
+            onKeyDown={handleTagKeyDown}
+            placeholder="Add tags (press Enter to add)"
+            className="w-full p-2 border border-neutral-200 rounded-lg outline-none focus:border-highlight transition-colors duration-150 ease-out-2"
           />
-          <label>Approved</label>
+          {metaTags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {metaTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 bg-highlight text-white text-sm px-2.5 py-1 rounded-md"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => removeTag(tag)}
+                    className="hover:bg-highlight-hover rounded transition-colors duration-150 ease-out-2 p-0.5"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-2">
@@ -86,56 +115,62 @@ export default function EventCreator() {
             value={formData.markerLat}
             onChange={handleChange}
             placeholder="Latitude"
-            className="p-2 border rounded"
+            className="p-2 border border-neutral-200 rounded-lg outline-none focus:border-highlight transition-colors duration-150 ease-out-2"
           />
           <input
             name="markerLng"
             value={formData.markerLng}
             onChange={handleChange}
             placeholder="Longitude"
-            className="p-2 border rounded"
+            className="p-2 border border-neutral-200 rounded-lg outline-none focus:border-highlight transition-colors duration-150 ease-out-2"
           />
         </div>
 
-        {/* Building dropdown */}
-        <select
-          name="buildingName"
-          value={formData.buildingName}
-          onChange={handleChange}
-          className="w-full p-2 border rounded bg-white"
-        >
-          <option value="">Select Building</option>
-          <option value="Fresno State Library">Henry Madden Library</option>
-          <option value="Engineering East">Engineering East</option>
-          <option value="Science 1">Science 1</option>
-          <option value="Science 2">Science 2</option>
-          <option value="Peters Business Building">Peters Business Building</option>
-          <option value="University Student Union">University Student Union</option>
-          <option value="Music Building">Music Building</option>
-          <option value="North Gym">North Gym</option>
-          <option value="South Gym">South Gym</option>
-          <option value="Bulldog Stadium">Bulldog Stadium</option>
-        </select>
+        {/* Start Date and Time */}
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-700">Start Date & Time</label>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="date"
+              name="dateStart"
+              value={formData.dateStart}
+              onChange={handleChange}
+              className="p-2 border border-neutral-200 rounded-lg outline-none focus:border-highlight transition-colors duration-150 ease-out-2 cursor-pointer"
+            />
+            <input
+              type="time"
+              name="timeStart"
+              value={formData.timeStart}
+              onChange={handleChange}
+              className="p-2 border border-neutral-200 rounded-lg outline-none focus:border-highlight transition-colors duration-150 ease-out-2 cursor-pointer"
+            />
+          </div>
+        </div>
 
-        <input
-          type="date"
-          name="datePosted"
-          value={formData.datePosted}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-        />
-
-        <input
-          name="creatorName"
-          value={formData.creatorName}
-          onChange={handleChange}
-          placeholder="Creator Name"
-          className="w-full p-2 border rounded"
-        />
+        {/* End Date and Time */}
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-700">End Date & Time</label>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="date"
+              name="dateEnd"
+              value={formData.dateEnd}
+              onChange={handleChange}
+              className="p-2 border border-neutral-200 rounded-lg outline-none focus:border-highlight transition-colors duration-150 ease-out-2 cursor-pointer"
+            />
+            <input
+              type="time"
+              name="timeEnd"
+              value={formData.timeEnd}
+              onChange={handleChange}
+              className="p-2 border border-neutral-200 rounded-lg outline-none focus:border-highlight transition-colors duration-150 ease-out-2 cursor-pointer"
+            />
+          </div>
+        </div>
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+          className="w-full bg-highlight text-white py-2 rounded-lg hover:bg-highlight-hover transition-[transform_background-color] duration-150 ease-out-2 cursor-pointer hover:scale-105 active:scale-95"
         >
           Save Event
         </button>
