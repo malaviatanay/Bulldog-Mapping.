@@ -1,18 +1,22 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { createRoot } from "react-dom/client";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useMapContext } from "@/context/MapContext";
 import { useSidebar } from "@/context/SidebarContext";
+import EventMarker from "./EventMarker";
 
 const INTITIAL_CENTER: [number, number] = [-119.74784, 36.81226];
 const INITIAL_ZOOM = 15;
+const DETAIL_ZOOM_THRESHOLD = 18; // Zoom level for simple vs detailed markers
 
 // map will take building and polygon data and event data as props =)
 export default function MapTest() {
   const mapRef = useRef<mapboxgl.Map>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const markersRef = useRef<{ marker: mapboxgl.Marker; root: any }[]>([]);
   const {
     buildings,
     events,
@@ -25,6 +29,24 @@ export default function MapTest() {
 
   const [center, setCenter] = useState<[number, number]>(INTITIAL_CENTER);
   const [zoom, setZoom] = useState<number>(INITIAL_ZOOM);
+  const [isSimpleView, setIsSimpleView] = useState<boolean>(INITIAL_ZOOM < DETAIL_ZOOM_THRESHOLD);
+
+  // Handler for event clicks (called from EventMarker component)
+  const handleEventClick = (event: any) => {
+    console.log("Event clicked:", event);
+    setSelectedEvent(event);
+    setView("event");
+    setIsOpen(true);
+
+    // Fly to the event location
+    if (mapRef.current)
+      mapRef.current.flyTo({
+        center: [event.longitude, event.latitude],
+        zoom: 17,
+        duration: 1000,
+        essential: true,
+      });
+  };
 
   useEffect(() => {
     // add your public token here
@@ -41,6 +63,7 @@ export default function MapTest() {
         const mapZoom = mapRef.current.getZoom();
         setCenter([mapCenter.lng, mapCenter.lat]);
         setZoom(mapZoom);
+        setIsSimpleView(mapZoom < DETAIL_ZOOM_THRESHOLD);
       }
     });
 
@@ -89,44 +112,7 @@ export default function MapTest() {
         },
       });
 
-      // Add event points source
-      mapRef.current.addSource("events", {
-        type: "geojson",
-        data: {
-          type: "FeatureCollection",
-          features: events
-            .filter((event) => event.isApproved) // Only show approved events
-            .map((event) => ({
-              type: "Feature",
-              id: event.id,
-              geometry: {
-                type: "Point",
-                coordinates: [event.longitude, event.latitude],
-              },
-              properties: {
-                eventId: event.id,
-                name: event.name,
-                description: event.description,
-                dateStart: event.dateStart,
-                dateEnd: event.dateEnd,
-                metaTags: event.metaTags,
-              },
-            })),
-        },
-      });
-
-      // Add event circle markers
-      mapRef.current.addLayer({
-        id: "events-circle",
-        type: "circle",
-        source: "events",
-        paint: {
-          "circle-radius": 10,
-          "circle-color": "#ff0000",
-          "circle-stroke-width": 3,
-          "circle-stroke-color": "#ffffff",
-        },
-      });
+      // Event markers are now handled by custom React components (see separate useEffect below)
 
       // Change cursor on hover for buildings
       mapRef.current.on("mouseenter", "buildings-fill", () => {
@@ -140,22 +126,10 @@ export default function MapTest() {
           mapRef.current.getCanvas().style.cursor = "";
         }
       });
-
-      // Change cursor on hover for events
-      mapRef.current.on("mouseenter", "events-circle", () => {
-        if (mapRef.current) {
-          mapRef.current.getCanvas().style.cursor = "pointer";
-        }
-      });
-
-      mapRef.current.on("mouseleave", "events-circle", () => {
-        if (mapRef.current) {
-          mapRef.current.getCanvas().style.cursor = "";
-        }
-      });
     });
 
     return () => {
+      // Map cleanup - markers will be automatically removed when map is destroyed
       if (mapRef.current) mapRef.current.remove();
     };
   }, [
@@ -223,44 +197,14 @@ export default function MapTest() {
       }
     };
 
-    // Handler for event clicks
-    const handleEventClick = (e: mapboxgl.MapLayerMouseEvent) => {
-      if (e.features && e.features.length > 0) {
-        const feature = e.features[0];
-        const eventId = feature.properties?.eventId;
-
-        if (eventId) {
-          // Find the full event data using the eventId
-          const event = events.find((ev) => ev.id === eventId);
-
-          if (event) {
-            console.log("Event clicked:", event);
-            setSelectedEvent(event);
-            setView("event");
-            setIsOpen(true);
-
-            // Fly to the event location with smooth animation
-            if (mapRef.current)
-              mapRef.current.flyTo({
-                center: [event.longitude, event.latitude],
-                zoom: 17,
-                duration: 1000,
-                essential: true,
-              });
-          }
-        }
-      }
-    };
-
     // Add appropriate listeners based on mode
     if (sdbr.mapPointerEvents === "dropPin") {
       // Drop pin mode - only allow dropping pins
       mapRef.current.on("click", handleMapClick);
       mapRef.current.getCanvas().style.cursor = "crosshair";
     } else {
-      // Normal mode - allow building and event clicks
+      // Normal mode - allow building clicks (event clicks handled by EventMarker component)
       mapRef.current.on("click", "buildings-fill", handleBuildingClick);
-      mapRef.current.on("click", "events-circle", handleEventClick);
     }
 
     // Cleanup: remove all listeners when mode changes or component unmounts
@@ -268,11 +212,69 @@ export default function MapTest() {
       if (mapRef.current) {
         mapRef.current.off("click", handleMapClick);
         mapRef.current.off("click", "buildings-fill", handleBuildingClick);
-        mapRef.current.off("click", "events-circle", handleEventClick);
         // No need to reset cursor - if map is being destroyed, cursor doesn't matter
       }
     };
   }, [sdbr, buildings, events, setSelectedBuilding, setSelectedEvent, setView, setIsOpen]);
+
+  // Add/update event markers when events or view mode changes
+  useEffect(() => {
+    if (!mapRef.current || !events) return;
+
+    // Clear existing markers (defer unmount to avoid race condition)
+    const oldMarkers = markersRef.current;
+    markersRef.current = [];
+
+    setTimeout(() => {
+      oldMarkers.forEach(({ marker, root }) => {
+        root.unmount();
+        marker.remove();
+      });
+    }, 0);
+
+    // Add new markers for approved events only
+    events
+      .filter((event) => event.isApproved)
+      .forEach((event) => {
+        // Create a div element for the marker
+        const el = document.createElement("div");
+        el.className = "custom-marker";
+        el.style.pointerEvents = 'auto';
+
+        // Create marker
+        const marker = new mapboxgl.Marker({
+          element: el,
+          anchor: isSimpleView ? 'center' : 'top'
+        })
+          .setLngLat([event.longitude, event.latitude])
+          .addTo(mapRef.current!);
+
+        // Create React root and render EventMarker component
+        const root = createRoot(el);
+        root.render(
+          <EventMarker
+            event={event}
+            onClick={() => handleEventClick(event)}
+            isSimple={isSimpleView}
+          />
+        );
+
+        // Store reference for cleanup
+        markersRef.current.push({ marker, root });
+      });
+
+    // Cleanup function
+    return () => {
+      const markers = markersRef.current;
+      setTimeout(() => {
+        markers.forEach(({ marker, root }) => {
+          root.unmount();
+          marker.remove();
+        });
+      }, 0);
+      markersRef.current = [];
+    };
+  }, [events, isSimpleView, setSelectedEvent, setView, setIsOpen]);
 
   return (
     <div
