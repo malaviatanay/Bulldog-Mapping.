@@ -33,22 +33,24 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
         className="relative w-full h-48 bg-gray-100 flex items-center justify-center mb-3  rounded-lg animate-image-intro"
       >
         {firstImage ? (
-          <>
+          <div className="w-full h-full relative ">
             {/* Blurred glow image underneath */}
             <Image
               src={firstImage}
               alt=""
-              fill
-              className="object-cover blur-md scale-105 opacity-60 rounded-lg"
+              width={500}
+              height={500}
+              className="object-cover top-0 left-0 w-full h-full absolute z-10 col-start-1 row-start-1 blur-md scale-105 opacity-60 rounded-lg"
             />
             {/* Main image on top */}
             <Image
               src={firstImage}
               alt={selectedBuilding.name}
-              fill
-              className="object-cover relative z-10 rounded-lg"
+              width={500}
+              height={500}
+              className="object-cover w-full h-full relative z-10 col-start-1 row-start-1 rounded-lg"
             />
-          </>
+          </div>
         ) : (
           <Building className="w-16 h-16 text-gray-400" />
         )}

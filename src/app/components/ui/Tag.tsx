@@ -8,8 +8,8 @@ type TagProps = {
 };
 
 const variantStyles: Record<TagVariant, string> = {
-  building: 'bg-blue-500 hover:bg-blue-600 text-white',
-  event: 'bg-highlight hover:bg-highlight-hover text-white',
+  building: 'bg-blue-500 border-blue-600 hover:bg-blue-600 text-white',
+  event: 'bg-highlight border-highlight-hover hover:bg-highlight-hover text-white',
 };
 
 const variantLabels: Record<TagVariant, string> = {
@@ -20,7 +20,7 @@ const variantLabels: Record<TagVariant, string> = {
 export default function Tag({ variant, className = "" }: TagProps) {
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium transition-colors duration-150 ease-out-2 ${variantStyles[variant]} ${className}`}
+      className={`button-depth inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium transition-colors duration-150 ease-out-2 ${variantStyles[variant]} ${className}`}
     >
       {variantLabels[variant]}
     </span>
