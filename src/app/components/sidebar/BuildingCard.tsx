@@ -38,16 +38,16 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
             <Image
               src={firstImage}
               alt=""
-              width={200}
-              height={200}
+              width={500}
+              height={500}
               className="object-cover top-0 left-0 w-full h-full absolute z-10 col-start-1 row-start-1 blur-md scale-105 opacity-60 rounded-lg"
             />
             {/* Main image on top */}
             <Image
               src={firstImage}
               alt={selectedBuilding.name}
-              width={200}
-              height={200}
+              width={500}
+              height={500}
               className="object-cover w-full h-full relative z-10 col-start-1 row-start-1 rounded-lg"
             />
           </div>

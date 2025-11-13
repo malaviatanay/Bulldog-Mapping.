@@ -1,58 +1,85 @@
 "use client";
-import { createClient } from "@/utils/supabase/client";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { User } from "@supabase/supabase-js";
+import { logout } from "@/app/login/actions";
+import Link from "next/link";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { LogOut } from "lucide-react";
 
-export default function UserBadge() {
-  const [user, setUser] = useState<any | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  useEffect(() => {
-    const fetchUser = async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-      if (error) {
-        console.error("Error fetching user:", error);
-        setLoading(false);
-        return;
-      }
-      console.log("Current user:", user);
-      setUser(user);
-      setLoading(false);
-    };
-    fetchUser();
-  }, []);
+export default function UserBadge({ userData }: { userData: User | null }) {
+  const user = userData;
+
   return (
-    <div className="flex">
-      <div className="w-full h-full my-auto mx-auto aspect-square rounded-lg overflow-hidden">
-        {user && user.user_metadata?.picture && !loading ? (
-          <Image
-            width={30}
-            height={30}
-            className="w-full h-full"
-            alt="User Picture"
-            src={user.user_metadata.picture}
-          ></Image>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="flex items-center gap-2 cursor-pointer hover:bg-neutral-50 p-2 rounded-md transition-opacity">
+          <div className="w-8 h-8 rounded-lg overflow-hidden">
+            {user && user.user_metadata?.picture ? (
+              <Image
+                width={32}
+                height={32}
+                className="w-full h-full object-cover"
+                alt="User Picture"
+                src={user.user_metadata.picture}
+              />
+            ) : (
+              <Image
+                width={32}
+                height={32}
+                alt="Doodle of bulldog"
+                className="w-full h-full object-cover"
+                src={"/logo.png"}
+              />
+            )}
+          </div>
+          <span className="text-sm font-medium">
+            {user && user.user_metadata.name
+              ? user.user_metadata.name.split(" ")[0]
+              : "Victor E Bulldog"}
+          </span>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-fit">
+        {user ? (
+          <>
+            <DropdownMenuLabel>
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium">
+                  {user.user_metadata?.name || "User"}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {user.email}
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <form>
+                <button
+                  formAction={logout}
+                  className="w-full flex items-center text-red-600 cursor-pointer"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </button>
+              </form>
+            </DropdownMenuItem>
+          </>
         ) : (
-          <Image
-            width={30}
-            height={30}
-            alt="Doodle of bulldog"
-            className="w-full h-full"
-            src={"/logo.png"}
-          ></Image>
+          <DropdownMenuItem asChild>
+            <Link href="/login" className="cursor-pointer">
+              Login
+            </Link>
+          </DropdownMenuItem>
         )}
-      </div>
-      <p className="flex flex-col">
-        <span>
-          {user && user.user_metadata.name
-            ? user.user_metadata.name.split(" ")[0]
-            : "Bulldog"}
-        </span>
-        <span></span>
-      </p>
-    </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

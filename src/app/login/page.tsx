@@ -1,14 +1,20 @@
+import Link from "next/link";
 import { loginWithGoogle } from "./actions";
 import Image from "next/image";
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-xl border border-neutral-200 max-w-sm w-full">
+    <div className="min-h-screen relative overflow-clip bg-neutral-50 flex items-center justify-center p-4">
+      <Image
+        src={"/fsu.jpg"}
+        width={500}
+        height={500}
+        alt="Fresno State Library at sunset"
+        className="absolute top-0 blur-sm mask-b-from-50% z-10 scale-105 left-0 w-full h-full object-cover pointer-events-none"
+      ></Image>
+      <div className="bg-white relative z-40 p-8 rounded-xl border border-neutral-200 max-w-sm w-full">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold mb-3">
-            Sign In
-          </h1>
+          <h1 className="text-2xl font-semibold mb-3">Sign In</h1>
           <div className="flex justify-center mb-3">
             <div className="button-depth relative w-20 h-20 rounded-lg overflow-hidden border border-neutral-300">
               <Image
@@ -46,11 +52,10 @@ export default function App() {
             type="button"
             className="text-gray-600 text-sm hover:text-gray-900 underline hover:no-underline transition-colors duration-150 ease-out-2 cursor-pointer"
           >
-            Do It Later
+            <Link href={"/"}>Do It Later</Link>
           </button>
         </div>
       </div>
     </div>
   );
 }
-

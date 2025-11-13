@@ -269,7 +269,7 @@ export default function MapTest() {
         mapRef.current.off("click", handleMapClick);
         mapRef.current.off("click", "buildings-fill", handleBuildingClick);
         mapRef.current.off("click", "events-circle", handleEventClick);
-        mapRef.current.getCanvas().style.cursor = "";
+        // No need to reset cursor - if map is being destroyed, cursor doesn't matter
       }
     };
   }, [sdbr, buildings, events, setSelectedBuilding, setSelectedEvent, setView, setIsOpen]);
@@ -278,7 +278,7 @@ export default function MapTest() {
     <div
       ref={mapContainerRef}
       id="map-container"
-      className="bg-neutral-200 absolute w-full h-full top-0 left-0 right-0 bottom-0 "
+      className="bg-neutral-200 absolute w-full h-full top1 left-0 right-0 bottom-0 "
     ></div>
   );
 }

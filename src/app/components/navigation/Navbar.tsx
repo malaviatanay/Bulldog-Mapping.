@@ -5,12 +5,14 @@ import { useMapContext } from "@/context/MapContext";
 import Clock from "./Clock";
 import Image from "next/image";
 import UserBadge from "./UserBadge";
+import { User } from "@supabase/supabase-js";
 
 type NavbarProps = {
   className?: string;
+  user: User | null;
 };
 
-export default function Navbar({ className = "" }: NavbarProps) {
+export default function Navbar({ className = "", user}: NavbarProps) {
   const { isOpen, setView, setIsOpen, toggleSidebar } = useSidebar();
   const { mapPointerEvents } = useMapContext();
   const isDropPinMode = mapPointerEvents === "dropPin";
@@ -19,9 +21,13 @@ export default function Navbar({ className = "" }: NavbarProps) {
     <div
       className={`fixed top-0 left-0 w-full grid items-center justify-items-center z-30 pointer-events-none ${className}`}
     >
-      <nav className={`w-full h-14  max-w-md  mt-4 rounded-xl overflow-clip px-2  bg-white pointer-events-auto border border-neutral-200 flex items-center relative transition-opacity duration-150 ease-out-2 ${isDropPinMode ? 'opacity-50 pointer-events-none' : ''}`}>
+      <nav
+        className={`w-full h-14  max-w-md  mt-4 rounded-xl px-2  bg-white pointer-events-auto border border-neutral-200 flex items-center relative transition-opacity duration-150 ease-out-2 ${
+          isDropPinMode ? "opacity-50 pointer-events-none" : ""
+        }`}
+      >
         <div className="nav__content flex items-center justify-between w-full">
-          <UserBadge/>
+          <UserBadge userData={user} />
           {/* <div className="relative w-10 h-10 rounded-lg overflow-hidden">
             <Image
               src="/logo.png"
