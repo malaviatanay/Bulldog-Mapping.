@@ -4,6 +4,7 @@ import { useSidebar } from "@/context/SidebarContext";
 import { useMapContext } from "@/context/MapContext";
 import Clock from "./Clock";
 import Image from "next/image";
+import UserBadge from "./UserBadge";
 
 type NavbarProps = {
   className?: string;
@@ -20,15 +21,16 @@ export default function Navbar({ className = "" }: NavbarProps) {
     >
       <nav className={`w-full h-14  max-w-md  mt-4 rounded-xl overflow-clip px-2  bg-white pointer-events-auto border border-neutral-200 flex items-center relative transition-opacity duration-150 ease-out-2 ${isDropPinMode ? 'opacity-50 pointer-events-none' : ''}`}>
         <div className="nav__content flex items-center justify-between w-full">
-          <div className="relative w-10 h-10 rounded-lg overflow-hidden">
+          <UserBadge/>
+          {/* <div className="relative w-10 h-10 rounded-lg overflow-hidden">
             <Image
-              src="/bulldogmappingicon.png"
+              src="/logo.png"
               alt="Bulldog Mapping"
               height={50}
               width={50}
-              className="object-cover scale-140"
+              className="object-cover scale-100"
             />
-          </div>
+          </div> */}
           <Clock className="hidden sm:flex absolute left-1/2 -translate-x-1/2" />
           <div className="buttons flex gap-2">
             <button
@@ -37,6 +39,7 @@ export default function Navbar({ className = "" }: NavbarProps) {
               aria-label="Events"
               onClick={() => {
                 setView("eventCreator");
+                setIsOpen(true);
               }}
             >
               <Calendar className="w-5 h-5 group-hover:text-white transition-colors duration-150 ease-out-2" />
