@@ -2,6 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Search, X, MapPin } from "lucide-react";
+import { useMapContext } from "@/context/MapContext";
+import { useSidebar } from "@/context/SidebarContext";
+import { Tables } from "@/types/supabase";
+
+type Building = Tables<"building">;
+type Event = Tables<"event">;
 
 type Category = {
   name: string;
@@ -9,18 +15,28 @@ type Category = {
   checked?: boolean;
 };
 
-type SearchSuggestion = {
-  id: number;
-  name: string;
-  type: string;
-};
+// type SearchSuggestion = {
+//   building?: Building;
+//   event?: Event;
+//   id: number;
+//   name: string;
+//   type: "Building" | "Parking" | "Food" | "Venue" | "Landmark";
+
+// };
+type SearchSuggestion = Building | Event;
 
 const SearchBar = () => {
+  const { buildings, events, setSelectedBuilding, setSelectedEvent } =
+    useMapContext();
+  const { setIsOpen, isOpen, setView } = useSidebar();
+  console.log("Buildings in SearchBar:", buildings);
+
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const searchRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const categories: Category[] = [
     { name: "Campus Layer", icon: "🗺️", checked: true },
@@ -34,25 +50,10 @@ const SearchBar = () => {
     { name: "Restrooms", icon: "🚻" },
   ];
 
-  // Mock data - Replace with actual building/location data
-  const allLocations: SearchSuggestion[] = [
-    { id: 1, name: "Henry Madden Library", type: "Building" },
-    { id: 2, name: "Student Union", type: "Building" },
-    { id: 3, name: "Science 1 Building", type: "Building" },
-    { id: 4, name: "Peters Business Building", type: "Building" },
-    { id: 5, name: "Kremen Education Building", type: "Building" },
-    { id: 6, name: "Save Mart Center", type: "Venue" },
-    { id: 7, name: "Engineering East", type: "Building" },
-    { id: 8, name: "Peace Garden", type: "Landmark" },
-    { id: 9, name: "Parking Lot P1", type: "Parking" },
-    { id: 10, name: "Parking Lot P2", type: "Parking" },
-    { id: 11, name: "Taco Bell Cantina", type: "Food" },
-    { id: 12, name: "Starbucks", type: "Food" },
-  ];
-
   // Filter suggestions based on search query
   useEffect(() => {
     if (searchQuery.length > 0) {
+      const allLocations: SearchSuggestion[] = [...buildings, ...events];
       const filtered = allLocations.filter((location) =>
         location.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
@@ -62,7 +63,7 @@ const SearchBar = () => {
       setSuggestions([]);
       setShowSuggestions(false);
     }
-  }, [searchQuery]);
+  }, [searchQuery, buildings, events]);
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -79,11 +80,27 @@ const SearchBar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (inputRef.current && isOpen) {
+      console.log('Focusing input');
+      inputRef.current.focus();
+    }
+  }, [isOpen]);
+
   const handleSuggestionClick = (suggestion: SearchSuggestion) => {
+    // if building, use any unique building property to differentiate
+    if ('hoursOpen' in suggestion) {
+      setSelectedBuilding(suggestion);
+      setView("building");
+    }
+    // else event
+    else {
+      setSelectedEvent(suggestion);
+      setView("event");
+    }
+
     setSearchQuery(suggestion.name);
     setShowSuggestions(false);
-    // TODO: Add logic to navigate to the location on the map
-    console.log("Selected:", suggestion);
   };
 
   const handleSearch = () => {
@@ -109,11 +126,12 @@ const SearchBar = () => {
         <div className="flex items-center p-3 border-b border-gray-200">
           <Search className="mr-3 w-5 h-5 text-gray-400" />
           <input
+            ref={inputRef}
             type="text"
             placeholder="Search buildings, parking, food..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={handleKeyPress}
+            // onKeyPress={handleKeyPress}
             className="flex-1 outline-none border-none text-sm text-gray-700 placeholder-gray-400"
           />
           {searchQuery && (
@@ -129,16 +147,16 @@ const SearchBar = () => {
           )}
           <button
             onClick={handleSearch}
-            className="bg-highlight text-white px-4 py-2 rounded-lg ml-2 cursor-pointer text-sm hover:bg-highlight-hover transition-[transform_background-color] duration-150 ease-out-2 hover:scale-105 active:scale-95"
+            className="bg-highlight button-depth text-white px-4 py-2 rounded-lg ml-2 cursor-pointer text-sm hover:bg-highlight-hover transition-[transform_background-color] duration-150 ease-out-2 hover:scale-105 active:scale-95"
           >
             Search
           </button>
-          <button
+          {/* <button
             onClick={() => setShowFilters(!showFilters)}
             className="ml-2 p-2 bg-highlight text-white rounded-lg cursor-pointer hover:bg-highlight-hover transition-[transform_background-color] duration-150 ease-out-2 hover:scale-105 active:scale-95"
           >
             <MapPin className="w-5 h-5" />
-          </button>
+          </button> */}
         </div>
 
         {/* Autocomplete Suggestions */}
@@ -151,18 +169,18 @@ const SearchBar = () => {
                 className="flex items-center justify-between p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors duration-150 ease-out-2"
               >
                 <div className="flex items-center">
-                  <span className="mr-3 text-lg">
+                  {/* <span className="mr-3 text-lg">
                     {suggestion.type === "Building" && "🏢"}
                     {suggestion.type === "Parking" && "🅿️"}
                     {suggestion.type === "Food" && "🍽️"}
                     {suggestion.type === "Venue" && "🏟️"}
                     {suggestion.type === "Landmark" && "🌳"}
-                  </span>
+                  </span> */}
                   <div>
                     <p className="text-sm font-medium text-gray-800">
                       {suggestion.name}
                     </p>
-                    <p className="text-xs text-gray-500">{suggestion.type}</p>
+                    {/* <p className="text-xs text-gray-500">{suggestion.type}</p> */}
                   </div>
                 </div>
                 <span className="text-gray-400 text-sm">→</span>
@@ -179,7 +197,7 @@ const SearchBar = () => {
         )}
 
         {/* Filters Section */}
-        {showFilters && (
+        {/* {showFilters && (
           <div className="max-h-96 overflow-y-auto">
             <div className="flex justify-between items-center p-3 border-b border-gray-200">
               <h3 className="font-semibold m-0 text-gray-700">Filters</h3>
@@ -208,7 +226,7 @@ const SearchBar = () => {
               </div>
             ))}
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

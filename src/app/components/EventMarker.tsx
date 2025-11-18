@@ -1,6 +1,9 @@
 "use client";
 
+import { Tables } from "@/types/supabase";
 import { useState, useEffect } from "react";
+
+type Event = Tables<"event">;
 
 // Helper function to calculate time until start
 export function getTimeUntilStart(dateStart: string | Date) {
@@ -54,7 +57,7 @@ export function getTimeUntilStart(dateStart: string | Date) {
 }
 
 interface EventMarkerProps {
-  event: any;
+  event: Event;
   onClick: () => void;
   isSimple: boolean;
 }
@@ -81,7 +84,7 @@ export default function EventMarker({ event, onClick, isSimple }: EventMarkerPro
       <div
         onClick={onClick}
         className={`w-4 h-4 rounded-full cursor-pointer shadow-md transition-transform hover:scale-125 ${
-          timeUntil?.urgent ? 'bg-red-500' : 'bg-blue-500'
+          timeUntil?.urgent ? 'bg-red-500 animate-pulse' : 'bg-blue-500'
         }`}
         style={{
           border: '2px solid white',
@@ -94,7 +97,7 @@ export default function EventMarker({ event, onClick, isSimple }: EventMarkerPro
   return (
     <div
       onClick={onClick}
-      className={`bg-white border-2 rounded-lg shadow-lg cursor-pointer hover:shadow-xl transition-shadow ${
+      className={`bg-white border-2 rounded-xl shadow-lg cursor-pointer hover:shadow-xl transition-shadow ${
         timeUntil?.urgent ? 'border-red-500' : 'border-blue-500'
       }`}
       style={{

@@ -1,12 +1,15 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot, Root } from "react-dom/client";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useMapContext } from "@/context/MapContext";
 import { useSidebar } from "@/context/SidebarContext";
 import EventMarker from "./EventMarker";
+import { Tables } from "@/types/supabase";
+
+type Event = Tables<"event">
 
 const INTITIAL_CENTER: [number, number] = [-119.74784, 36.81226];
 const INITIAL_ZOOM = 15;
@@ -16,7 +19,7 @@ const DETAIL_ZOOM_THRESHOLD = 18; // Zoom level for simple vs detailed markers
 export default function MapTest() {
   const mapRef = useRef<mapboxgl.Map>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const markersRef = useRef<{ marker: mapboxgl.Marker; root: any }[]>([]);
+  const markersRef = useRef<{ marker: mapboxgl.Marker; root: Root}[]>([]);
   const {
     buildings,
     events,
@@ -32,7 +35,7 @@ export default function MapTest() {
   const [isSimpleView, setIsSimpleView] = useState<boolean>(INITIAL_ZOOM < DETAIL_ZOOM_THRESHOLD);
 
   // Handler for event clicks (called from EventMarker component)
-  const handleEventClick = (event: any) => {
+  const handleEventClick = (event: Event) => {
     console.log("Event clicked:", event);
     setSelectedEvent(event);
     setView("event");
@@ -280,7 +283,7 @@ export default function MapTest() {
     <div
       ref={mapContainerRef}
       id="map-container"
-      className="bg-neutral-200 absolute w-full h-full top1 left-0 right-0 bottom-0 "
+      className="bg-neutral-200 animate-map-intro absolute w-full h-full top1 left-0 right-0 bottom-0 "
     ></div>
   );
 }

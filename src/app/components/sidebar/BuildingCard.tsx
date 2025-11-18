@@ -18,7 +18,7 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
   const firstImage = selectedBuilding.image_URLs?.[0];
 
   return (
-    <div className={`building-card ${className} `}>
+    <div key={selectedBuilding.id} className={`building-card ${className} `}>
       {/* Heading */}
       <div className="mb-3">
         <div className="flex items-center gap-2 mb-2">
