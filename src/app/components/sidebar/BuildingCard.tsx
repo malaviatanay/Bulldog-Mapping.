@@ -32,7 +32,7 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
         key={selectedBuilding.id}
         className="relative w-full h-48 bg-gray-100 flex items-center justify-center mb-3  rounded-lg animate-image-intro"
       >
-        {firstImage ? (
+        {firstImage && firstImage != null ? (
           <div className="w-full h-full relative ">
             {/* Blurred glow image underneath */}
             <Image
