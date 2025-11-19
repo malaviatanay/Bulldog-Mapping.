@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Search, X, MapPin } from "lucide-react";
+import { useMapContext } from "@/context/MapContext";
+import EventCardMin from "./EventCardMin";
 
 type Category = {
   name: string;
@@ -19,8 +21,24 @@ const SearchBar = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+  const [showEvents, setShowEvents] = useState<boolean>(false);
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  const [mounted, setMounted] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  const { events = [] } = useMapContext();
+
+  // Ensure component is mounted (client-side only)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Sort events: approved/live first, then by date
+  const sortedEvents = mounted && events?.length > 0 ? [...events].sort((a, b) => {
+    if (a.isApproved && !b.isApproved) return -1;
+    if (!a.isApproved && b.isApproved) return 1;
+    return new Date(a.dateStart).getTime() - new Date(b.dateStart).getTime();
+  }) : [];
 
   const categories: Category[] = [
     { name: "Campus Layer", icon: "🗺️", checked: true },
@@ -34,7 +52,6 @@ const SearchBar = () => {
     { name: "Restrooms", icon: "🚻" },
   ];
 
-  // Mock data - Replace with actual building/location data
   const allLocations: SearchSuggestion[] = [
     { id: 1, name: "Henry Madden Library", type: "Building" },
     { id: 2, name: "Student Union", type: "Building" },
@@ -50,21 +67,20 @@ const SearchBar = () => {
     { id: 12, name: "Starbucks", type: "Food" },
   ];
 
-  // Filter suggestions based on search query
   useEffect(() => {
     if (searchQuery.length > 0) {
       const filtered = allLocations.filter((location) =>
         location.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      setSuggestions(filtered.slice(0, 5)); // Show max 5 suggestions
+      setSuggestions(filtered.slice(0, 5));
       setShowSuggestions(true);
+      setShowEvents(false);
     } else {
       setSuggestions([]);
       setShowSuggestions(false);
     }
   }, [searchQuery]);
 
-  // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -72,6 +88,7 @@ const SearchBar = () => {
         !searchRef.current.contains(event.target as Node)
       ) {
         setShowSuggestions(false);
+        setShowEvents(false);
       }
     };
 
@@ -82,21 +99,32 @@ const SearchBar = () => {
   const handleSuggestionClick = (suggestion: SearchSuggestion) => {
     setSearchQuery(suggestion.name);
     setShowSuggestions(false);
-    // TODO: Add logic to navigate to the location on the map
+    setShowEvents(false);
     console.log("Selected:", suggestion);
+  };
+
+  const handleEventClick = (event: any) => {
+    console.log("Event clicked:", event);
+    setShowEvents(false);
   };
 
   const handleSearch = () => {
     if (searchQuery) {
-      // TODO: Add search logic here
       console.log("Searching for:", searchQuery);
       setShowSuggestions(false);
+      setShowEvents(false);
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleSearch();
+    }
+  };
+
+  const handleInputFocus = () => {
+    if (searchQuery.length === 0 && mounted) {
+      setShowEvents(true);
     }
   };
 
@@ -114,6 +142,7 @@ const SearchBar = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={handleKeyPress}
+            onFocus={handleInputFocus}
             className="flex-1 outline-none border-none text-sm text-gray-700 placeholder-gray-400"
           />
           {searchQuery && (
@@ -121,6 +150,7 @@ const SearchBar = () => {
               onClick={() => {
                 setSearchQuery("");
                 setShowSuggestions(false);
+                if (mounted) setShowEvents(true);
               }}
               className="mr-2 p-1 rounded hover:bg-gray-100 transition-colors duration-150 ease-out-2 cursor-pointer"
             >
@@ -140,6 +170,36 @@ const SearchBar = () => {
             <MapPin className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Events List - Client-side only with safety checks */}
+        {mounted && showEvents && !showSuggestions && sortedEvents.length > 0 && (
+          <div className="bg-white border-b border-gray-200 max-h-96 overflow-y-auto">
+            <div className="px-3 py-2 bg-gray-50 border-b border-gray-200 sticky top-0">
+              <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                📅 Campus Events
+              </h3>
+            </div>
+            {sortedEvents.slice(0, 8).map((event) => (
+              <EventCardMin
+                key={event.id}
+                name={event.name || "Unnamed Event"}
+                buildingIDs={event.buildingIDs}
+                dateStart={event.dateStart}
+                dateEnd={event.dateEnd}
+                isApproved={event.isApproved}
+                description={event.description}
+                onClick={() => handleEventClick(event)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Show message if no events available */}
+        {mounted && showEvents && !showSuggestions && sortedEvents.length === 0 && (
+          <div className="p-4 text-center text-gray-500 text-sm">
+            No events scheduled at this time.
+          </div>
+        )}
 
         {/* Autocomplete Suggestions */}
         {showSuggestions && suggestions.length > 0 && (
