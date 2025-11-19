@@ -26,7 +26,7 @@ type Category = {
 type SearchSuggestion = Building | Event;
 
 const SearchBar = () => {
-  const { buildings, events, setSelectedBuilding, setSelectedEvent } =
+  const { buildings, events, buildingPolygons, setSelectedBuilding, setSelectedEvent, flyTo } =
     useMapContext();
   const { setIsOpen, isOpen, setView } = useSidebar();
   console.log("Buildings in SearchBar:", buildings);
@@ -87,9 +87,32 @@ const SearchBar = () => {
     }
   }, [isOpen]);
 
+  // Helper to calculate center of a GeoJSON polygon
+  const getCenterFromGeoJSON = (geojson: GeoJSON.Feature): [number, number] => {
+    const coords = geojson.geometry.type === "Polygon"
+      ? geojson.geometry.coordinates[0]
+      : [];
+
+    // Calculate average lng/lat
+    const sumLng = coords.reduce((sum: number, coord: number[]) => sum + coord[0], 0);
+    const sumLat = coords.reduce((sum: number, coord: number[]) => sum + coord[1], 0);
+
+    return [sumLng / coords.length, sumLat / coords.length];
+  };
+
   const handleSuggestionClick = (suggestion: SearchSuggestion) => {
     // if building, use any unique building property to differentiate
     if ('hoursOpen' in suggestion) {
+      console.log("Building selected:", suggestion);
+      const geoData = buildingPolygons.find(
+        (bp) => bp.building_id === suggestion.id
+      )?.geojson;
+
+      if (geoData) {
+        const [lng, lat] = getCenterFromGeoJSON(geoData as unknown as GeoJSON.Feature);
+        flyTo(lng, lat, 17);
+      }
+
       setSelectedBuilding(suggestion);
       setView("building");
     }
@@ -97,6 +120,7 @@ const SearchBar = () => {
     else {
       setSelectedEvent(suggestion);
       setView("event");
+      flyTo(suggestion.longitude, suggestion.latitude, 17);
     }
 
     setSearchQuery(suggestion.name);

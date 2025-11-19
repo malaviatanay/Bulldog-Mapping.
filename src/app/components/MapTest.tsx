@@ -26,6 +26,7 @@ export default function MapTest() {
     buildingPolygons,
     setSelectedBuilding,
     setSelectedEvent,
+    flyToTarget,
     ...sdbr
   } = useMapContext();
   const { setView, setIsOpen } = useSidebar();
@@ -219,6 +220,18 @@ export default function MapTest() {
       }
     };
   }, [sdbr, buildings, events, setSelectedBuilding, setSelectedEvent, setView, setIsOpen]);
+
+  // Handle flyTo from context
+  useEffect(() => {
+    if (!mapRef.current || !flyToTarget) return;
+
+    mapRef.current.flyTo({
+      center: [flyToTarget.lng, flyToTarget.lat],
+      zoom: flyToTarget.zoom ?? 17,
+      duration: 1000,
+      essential: true,
+    });
+  }, [flyToTarget]);
 
   // Add/update event markers when events or view mode changes
   useEffect(() => {

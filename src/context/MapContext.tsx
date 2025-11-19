@@ -28,12 +28,14 @@ type MapContextType = {
   lastClickedCords?: [number, number] | null;
   mapPointerEvents: MapPointerEvents;
   filters: FilterState;
+  flyToTarget: { lng: number; lat: number; zoom?: number } | null;
   setLastClickedCords: (cords: [number, number] | null) => void;
   setMapPointerEvents: (mode: MapPointerEvents) => void;
   setSelectedBuilding: (building: Building | null) => void;
   setSelectedEvent: (event: Event | null) => void;
   setSearchQuery: (query: string) => void;
   setFilters: (filters: FilterState) => void;
+  flyTo: (lng: number, lat: number, zoom?: number) => void;
 };
 
 type MapProviderProps = {
@@ -63,6 +65,15 @@ export function MapProvider({
     tags: [],
     dateRange: undefined,
   });
+  const [flyToTarget, setFlyToTarget] = useState<{
+    lng: number;
+    lat: number;
+    zoom?: number;
+  } | null>(null);
+
+  const flyTo = (lng: number, lat: number, zoom?: number) => {
+    setFlyToTarget({ lng, lat, zoom });
+  };
 
   const value: MapContextType = {
     buildings,
@@ -74,12 +85,14 @@ export function MapProvider({
     filters,
     mapPointerEvents,
     lastClickedCords,
+    flyToTarget,
     setLastClickedCords,
     setMapPointerEvents,
     setSelectedBuilding,
     setSelectedEvent,
     setSearchQuery,
     setFilters,
+    flyTo,
   };
 
   return <MapContext value={value}>{children}</MapContext>;

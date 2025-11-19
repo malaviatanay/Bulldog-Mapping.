@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+html{
+ interpolate-size: allow-keywords; 
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

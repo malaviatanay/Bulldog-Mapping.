@@ -13,7 +13,7 @@ export function getTimeUntilStart(dateStart: string | Date) {
 
   // Event has already started or passed
   if (diffMs < 0) {
-    return { text: 'Started', color: 'text-gray-500', urgent: false };
+    return { text: "Started", color: "text-gray-500", urgent: false };
   }
 
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
@@ -24,8 +24,8 @@ export function getTimeUntilStart(dateStart: string | Date) {
   if (diffHours < 1) {
     return {
       text: `${diffMinutes} min`,
-      color: 'text-red-600',
-      urgent: true
+      color: "text-red-600",
+      urgent: true,
     };
   }
 
@@ -33,8 +33,8 @@ export function getTimeUntilStart(dateStart: string | Date) {
   if (diffDays < 1) {
     return {
       text: `${diffHours} hours`,
-      color: 'text-orange-600',
-      urgent: true
+      color: "text-orange-600",
+      urgent: true,
     };
   }
 
@@ -42,17 +42,17 @@ export function getTimeUntilStart(dateStart: string | Date) {
   if (diffDays < 7) {
     return {
       text: `${diffDays} days`,
-      color: 'text-blue-600',
-      urgent: false
+      color: "text-blue-600",
+      urgent: false,
     };
   }
 
   // More than 7 days - show weeks
   const diffWeeks = Math.floor(diffDays / 7);
   return {
-    text: `${diffWeeks} week${diffWeeks > 1 ? 's' : ''}`,
-    color: 'text-gray-600',
-    urgent: false
+    text: `${diffWeeks} week${diffWeeks > 1 ? "s" : ""}`,
+    color: "text-gray-600",
+    urgent: false,
   };
 }
 
@@ -62,7 +62,11 @@ interface EventMarkerProps {
   isSimple: boolean;
 }
 
-export default function EventMarker({ event, onClick, isSimple }: EventMarkerProps) {
+export default function EventMarker({
+  event,
+  onClick,
+  isSimple,
+}: EventMarkerProps) {
   const [timeUntil, setTimeUntil] = useState(() =>
     event.dateStart ? getTimeUntilStart(event.dateStart) : null
   );
@@ -82,37 +86,47 @@ export default function EventMarker({ event, onClick, isSimple }: EventMarkerPro
   if (isSimple) {
     return (
       <div
-        onClick={onClick}
-        className={`w-4 h-4 rounded-full cursor-pointer shadow-md transition-transform hover:scale-125 ${
-          timeUntil?.urgent ? 'bg-red-500 animate-pulse' : 'bg-blue-500'
-        }`}
-        style={{
-          border: '2px solid white',
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
         }}
-      />
+        className={` group relative w-fit min-w-4 min-h-4  active:scale-97 border-1 border-neutral-100 rounded-md cursor-pointer flex justify-center items-center shadow-md  h-fit transition-[transform] ease-out-3 duration-300 button-depth  ${
+          timeUntil?.urgent ? "bg-red-500 animate-pulse" : "bg-blue-500"
+        }`}
+      >
+        <div className="absolute top-0 left-0 w-2/1 h-2/1  -translate-1/7 z-0"></div>
+        <span className="flex  text-base font-medium opacity-0 group-hover:opacity-100 pointer-events-none group-hover:w-fit transition-[height_width_opacity_blur] blur-xs group-hover:blur-none ease-out-3 duration-300 text-nowrap p-1  group-hover:h-auto w-0 h-0 text-white   overflow-hidden">
+          <span>{event.name}</span>
+        </span>
+      </div>
     );
   }
 
   // Detailed marker for zoomed in view
   return (
     <div
-      onClick={onClick}
-      className={`bg-white border-2 rounded-xl shadow-lg cursor-pointer hover:shadow-xl transition-shadow ${
-        timeUntil?.urgent ? 'border-red-500' : 'border-blue-500'
-      }`}
-      style={{
-        width: '200px', // Fixed width
-        maxWidth: '200px',
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
       }}
+      className={`bg-white w-[200px] border-1 overflow-clip border-neutral-100 button-depth hover:scale-105 active:scale-97 transition-transform ease-out-2 duration-150 rounded-xl shadow-md pointer-events-auto select-all relative z-40 cursor-pointer hover:shadow-xl ${
+        timeUntil?.urgent ? "bg-red-500" : "bg-blue-500"
+      }`}
     >
       {/* Header with event name and countdown */}
-      <div className={`px-3 py-2 rounded-t-lg ${
-        timeUntil?.urgent ? 'bg-red-500' : 'bg-blue-500'
-      } text-white`}>
-        <div className="font-semibold text-sm truncate">{event.name || 'Event'}</div>
+      <div
+        className={`px-3 py-2 rounded-t-lg ${
+          timeUntil?.urgent ? "bg-red-500" : "bg-blue-500"
+        } text-white`}
+      >
+        <div className="font-semibold text-sm truncate">
+          {event.name || "Event"}
+        </div>
         {timeUntil && (
           <div className="text-xs opacity-90 mt-0.5">
-            {timeUntil.text === 'Started' ? '🔴 Started' : `⏱️ in ${timeUntil.text}`}
+            {timeUntil.text === "Started"
+              ? "🔴 Started"
+              : `⏱️ in ${timeUntil.text}`}
           </div>
         )}
       </div>
@@ -123,12 +137,12 @@ export default function EventMarker({ event, onClick, isSimple }: EventMarkerPro
         {event.dateStart && (
           <div className="flex items-center gap-2 text-xs">
             <span className="text-gray-500 font-medium">Starts:</span>
-            <span className={`${timeUntil?.color || 'text-gray-700'} truncate`}>
-              {new Date(event.dateStart).toLocaleString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit'
+            <span className={`${timeUntil?.color || "text-gray-700"} truncate`}>
+              {new Date(event.dateStart).toLocaleString("en-US", {
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
               })}
             </span>
           </div>
