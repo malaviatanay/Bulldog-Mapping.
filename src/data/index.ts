@@ -45,7 +45,7 @@ export async function getUserAdminStatus() {
     .from("campusAdmin")
     .select("*")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
   if (error) throw error;
 
   if (data?.user_id) return true;
@@ -67,7 +67,7 @@ export async function approveEvent(eventId: string) {
     .from("campusAdmin")
     .select("*")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
   if (adminRes.error) throw adminRes.error;
 
   if (!adminRes.data?.user_id) {
@@ -99,7 +99,7 @@ export async function deleteEvent(eventId: string) {
     .from("campusAdmin")
     .select("*")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
   if (adminRes.error) throw adminRes.error;
 
   if (!adminRes.data?.user_id) {
