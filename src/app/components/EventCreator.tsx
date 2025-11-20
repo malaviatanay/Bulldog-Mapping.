@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { X, MapPin, ArrowLeft } from "lucide-react";
 import { useMapContext } from "@/context/MapContext";
 import { useSidebar } from "@/context/SidebarContext";
+import { createClient } from "@/utils/supabase/client"; // or wherever your client.ts is located
 
 type EventCreatorProps = {
   className?: string;
@@ -22,6 +23,10 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
 
   const [metaTags, setMetaTags] = useState<string[]>([]);
   const [currentTag, setCurrentTag] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const supabase = createClient(); // Create client instance
+  
   const MapCtx = useMapContext();
   const { setIsOpen, setView } = useSidebar();
 
@@ -34,9 +39,7 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
         markerLat: lat.toString(),
         markerLng: lng.toString(),
       }));
-      // Clear the last clicked coords so we can pick again
       MapCtx.setLastClickedCords(null);
-      // Reset map mode and reopen sidebar
       MapCtx.setMapPointerEvents("all");
       setIsOpen(true);
     }
@@ -68,20 +71,114 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
     setMetaTags(metaTags.filter((tag) => tag !== tagToRemove));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
 
-    const formattedData = {
-      ...formData,
-      metaTags,
-      markerCords: [
-        parseFloat(formData.markerLng),
-        parseFloat(formData.markerLat),
-      ],
-    };
+    try {
+      // Validate required fields
+      if (!formData.name.trim()) {
+        throw new Error("Event name is required");
+      }
+      
+      if (!formData.markerLat || !formData.markerLng) {
+        throw new Error("Please select a location on the map");
+      }
 
-    console.log("Event UI Submitted:", formattedData);
-    alert("Event form submitted (UI only)!");
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      console.log("User check:", { user, userError });
+      
+      if (userError) {
+        throw new Error("Please sign in to create events");
+      }
+      
+      if (!user) {
+        throw new Error("Please sign in to create events");
+      }
+
+      // Combine date and time into ISO strings
+      const startDateTime = formData.dateStart && formData.timeStart 
+        ? new Date(`${formData.dateStart}T${formData.timeStart}`).toISOString()
+        : new Date().toISOString(); // Default to now if not provided
+      
+      const endDateTime = formData.dateEnd && formData.timeEnd
+        ? new Date(`${formData.dateEnd}T${formData.timeEnd}`).toISOString()
+        : null;
+
+      // Prepare data matching your exact table structure
+      const eventData = {
+        name: formData.name,
+        description: formData.description || null,
+        latitude: parseFloat(formData.markerLat),
+        longitude: parseFloat(formData.markerLng),
+        dateStart: startDateTime,
+        dateEnd: endDateTime,
+        datePosted: new Date().toISOString(),
+        metaTags: metaTags,
+        creatorID: user.id,
+        buildingIDs: [], // Empty array for now, add building selection if needed
+        isApproved: false, // Default to false, requires approval
+      };
+
+      console.log("Attempting to insert event:", eventData);
+
+      // Insert into Supabase
+      const { data, error: insertError } = await supabase
+        .from('event') // Table name is 'event' (singular, lowercase)
+        .insert([eventData])
+        .select();
+
+      console.log("Insert result:", { data, insertError });
+
+      if (insertError) {
+        console.error("Raw insertError:", insertError);
+        console.error("insertError type:", typeof insertError);
+        console.error("insertError constructor:", insertError?.constructor?.name);
+        console.error("Supabase insert error details:", {
+          message: insertError.message,
+          details: insertError.details,
+          hint: insertError.hint,
+          code: insertError.code
+        });
+        throw new Error(insertError.message || JSON.stringify(insertError) || "Failed to insert event");
+      }
+
+      console.log("Event created successfully:", data);
+      
+      // Reset form after successful submission
+      setFormData({
+        name: "",
+        description: "",
+        markerLat: "",
+        markerLng: "",
+        dateStart: "",
+        timeStart: "",
+        dateEnd: "",
+        timeEnd: "",
+      });
+      setMetaTags([]);
+      
+      // Show success message
+      alert("Event created successfully! It will be visible once approved.");
+      
+      // Optional: Close sidebar or navigate elsewhere
+      // setIsOpen(false);
+      
+    } catch (err: any) {
+      console.error("Error creating event - Full error:", err);
+      console.error("Error type:", typeof err);
+      console.error("Error keys:", Object.keys(err));
+      console.error("Error message:", err?.message);
+      console.error("Error stack:", err?.stack);
+      
+      const errorMessage = err?.message || err?.toString() || "Failed to create event. Please try again.";
+      setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -99,6 +196,13 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
         <h2 className="text-xl font-semibold">Create an Event</h2>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {error}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-3">
         {/* Event Name */}
         <div className="mb-3">
@@ -114,6 +218,7 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
             value={formData.name}
             onChange={handleChange}
             placeholder="e.g., Campus Tour"
+            required
             className="w-full p-2 border border-neutral-200 rounded-lg outline-none focus:border-neutral-400 transition-colors duration-150 ease-out-2"
           />
         </div>
@@ -292,9 +397,10 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
 
         <button
           type="submit"
-          className="button-depth w-full bg-highlight text-white py-2 rounded-lg border border-highlight-hover hover:bg-highlight-hover transition-[transform_background-color] duration-250 ease-out-3 cursor-pointer hover:scale-105 active:scale-95"
+          disabled={isSubmitting}
+          className="button-depth w-full bg-highlight text-white py-2 rounded-lg border border-highlight-hover hover:bg-highlight-hover transition-[transform_background-color] duration-250 ease-out-3 cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
-          Save Event
+          {isSubmitting ? "Creating Event..." : "Save Event"}
         </button>
       </form>
     </div>
