@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogOut } from "lucide-react";
 
-export default function UserBadge({ userData }: { userData: User | null }) {
+export default function UserBadge({ userData, isAdmin }: { userData: User | null; isAdmin: boolean }) {
   const user = userData;
 
   return (
@@ -39,11 +39,16 @@ export default function UserBadge({ userData }: { userData: User | null }) {
               />
             )}
           </div>
-          <span className="text-sm font-medium">
-            {user && user.user_metadata.name
-              ? user.user_metadata.name.split(" ")[0]
-              : "V.E. Bulldog"}
-          </span>
+          <div className="flex flex-col items-start">
+            <span className="text-sm font-medium">
+              {user && user.user_metadata.name
+                ? user.user_metadata.name.split(" ")[0]
+                : "V.E. Bulldog"}
+            </span>
+            {isAdmin && user && (
+              <span className="text-xs text-gray-500">Admin</span>
+            )}
+          </div>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-fit">

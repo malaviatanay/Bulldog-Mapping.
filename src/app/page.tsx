@@ -8,7 +8,7 @@ import Navbar from "./components/navigation/Navbar";
 import { createClient } from "@/utils/supabase/server";
 
 export default async function Home() {
-  const test = await getUserAdminStatus();
+  const adminStatus = await getUserAdminStatus();
   const supabase = await createClient();
   const userData = supabase.auth.getUser();
   const buildingData = getBuildings();
@@ -38,9 +38,9 @@ export default async function Home() {
         buildingPolygons={buildingPolygons}
       >
         <SidebarProvider>
-          <Navbar user={user}></Navbar>
+          <Navbar user={user} isAdmin={adminStatus}></Navbar>
           <main className="h-full w-full relative">
-            <Sidebar></Sidebar>
+            <Sidebar user={user} isAdmin={adminStatus}></Sidebar>
             <MapTest></MapTest>
           </main>
         </SidebarProvider>

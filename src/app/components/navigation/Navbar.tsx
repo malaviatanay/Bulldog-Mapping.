@@ -10,9 +10,10 @@ import { User } from "@supabase/supabase-js";
 type NavbarProps = {
   className?: string;
   user: User | null;
+  isAdmin: boolean;
 };
 
-export default function Navbar({ className = "", user}: NavbarProps) {
+export default function Navbar({ className = "", user, isAdmin}: NavbarProps) {
   const { isOpen, setView, setIsOpen, toggleSidebar } = useSidebar();
   const { mapPointerEvents } = useMapContext();
   const isDropPinMode = mapPointerEvents === "dropPin";
@@ -27,7 +28,7 @@ export default function Navbar({ className = "", user}: NavbarProps) {
         }`}
       >
         <div className="nav__content flex items-center justify-between w-full">
-          <UserBadge userData={user} />
+          <UserBadge userData={user} isAdmin={isAdmin} />
           {/* <div className="relative w-10 h-10 rounded-lg overflow-hidden">
             <Image
               src="/logo.png"

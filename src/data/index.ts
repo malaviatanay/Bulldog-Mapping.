@@ -39,7 +39,6 @@ export async function getUserAdminStatus() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return false;
-  if (user) console.log("User:", user);
 
   const userId = user.id;
   const { data, error } = await supabase
@@ -49,5 +48,70 @@ export async function getUserAdminStatus() {
     .single();
   if (error) throw error;
 
-  return data?.user_id || false;
+  if (data?.user_id) return true;
+
+  return false;
+}
+
+export async function approveEvent(eventId: string) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not logged in");
+
+  const userId = user.id;
+
+  const adminRes = await supabase
+    .from("campusAdmin")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+  if (adminRes.error) throw adminRes.error;
+
+  if (!adminRes.data?.user_id) {
+   throw new Error("User is not an admin");
+  }
+
+  const { data, error } = await supabase
+    .from("event")
+    .update({ isApproved: true })
+    .eq("id", eventId);
+  if (error) throw error;
+
+  return data;
+}
+
+
+
+export async function deleteEvent(eventId: string) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not logged in");
+
+  const userId = user.id;
+
+  const adminRes = await supabase
+    .from("campusAdmin")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+  if (adminRes.error) throw adminRes.error;
+
+  if (!adminRes.data?.user_id) {
+   throw new Error("User is not an admin");
+  }
+
+  const { data, error } = await supabase
+    .from("event")
+    .delete()
+    .eq("id", eventId);
+    if(error)console.log("error", error);
+  if (error) throw error;
+
+  return data;
 }

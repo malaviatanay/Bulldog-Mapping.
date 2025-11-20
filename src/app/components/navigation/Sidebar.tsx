@@ -8,8 +8,15 @@ import EventCard from "../sidebar/EventCard";
 import SearchBar from "../SearchBar";
 import EventCreator from "../EventCreator";
 import EventList from "../EventList";
+import { User } from "@supabase/supabase-js";
+import Image from "next/image";
 
-export default function Sidebar() {
+type SidebarProps = {
+  user: User | null;
+  isAdmin: boolean;
+};
+
+export default function Sidebar({ user, isAdmin }: SidebarProps) {
   const { isOpen, setIsOpen, view, setView } = useSidebar();
   const { mapPointerEvents } = useMapContext();
   const isDropPinMode = mapPointerEvents === "dropPin";
@@ -47,22 +54,24 @@ export default function Sidebar() {
       >
         {/* Background Logo - hidden on eventCreator and eventList views */}
         {view !== "eventCreator" && view !== "eventList" && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 mix-blend-hard-light opacity-5">
-            <img
+          <div className="absolute select-none pointer-events-none inset-0 flex items-center justify-center z-0 mix-blend-hard-light opacity-5">
+            <Image
               src="/logo.png"
               alt=""
-              className="w-[300px] h-[300px] object-contain"
+              width={300}
+              height={300}
+              className="object-contain"
             />
           </div>
         )}
 
         {/* Content */}
-        <div className="relative z-10">
+        <div className="relative z-10 h-full">
           {view === "building" && <BuildingCard></BuildingCard>}
           {view === "event" && <EventCard></EventCard>}
           {view === "search" && <SearchBar></SearchBar>}
           {view === "eventCreator" && <EventCreator></EventCreator>}
-          {view === "eventList" && <EventList></EventList>}
+          {view === "eventList" && <EventList user={user} isAdmin={isAdmin}></EventList>}
         </div>
       </menu>
     </aside>

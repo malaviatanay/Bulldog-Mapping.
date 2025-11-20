@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
-import { X, MapPin, ArrowLeft } from "lucide-react";
+import { X, MapPin, ArrowLeft, CheckCircle } from "lucide-react";
 import { useMapContext } from "@/context/MapContext";
 import { useSidebar } from "@/context/SidebarContext";
-import { createClient } from "@/utils/supabase/client"; // or wherever your client.ts is located
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 type EventCreatorProps = {
   className?: string;
@@ -25,10 +26,24 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
   const [currentTag, setCurrentTag] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
   const supabase = createClient(); // Create client instance
-  
+  const router = useRouter();
+
   const MapCtx = useMapContext();
   const { setIsOpen, setView } = useSidebar();
+
+  // Auto-refresh after success
+  useEffect(() => {
+    if (showSuccess) {
+      const timeout = setTimeout(() => {
+        router.refresh();
+        setView("eventList");
+      }, 3000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [showSuccess, router, setView]);
 
   // Watch for dropped pin coordinates
   useEffect(() => {
@@ -77,38 +92,25 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
     setIsSubmitting(true);
 
     try {
-      // Validate required fields
-      if (!formData.name.trim()) {
-        throw new Error("Event name is required");
-      }
-      
-      if (!formData.markerLat || !formData.markerLng) {
-        throw new Error("Please select a location on the map");
-      }
-
       // Get current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      console.log("User check:", { user, userError });
-      
-      if (userError) {
-        throw new Error("Please sign in to create events");
-      }
-      
-      if (!user) {
-        throw new Error("Please sign in to create events");
+
+      if (userError || !user) {
+        setError("Please sign in to create events");
+        setIsSubmitting(false);
+        return;
       }
 
       // Combine date and time into ISO strings
-      const startDateTime = formData.dateStart && formData.timeStart 
+      const startDateTime = formData.dateStart && formData.timeStart
         ? new Date(`${formData.dateStart}T${formData.timeStart}`).toISOString()
-        : new Date().toISOString(); // Default to now if not provided
-      
+        : new Date().toISOString();
+
       const endDateTime = formData.dateEnd && formData.timeEnd
         ? new Date(`${formData.dateEnd}T${formData.timeEnd}`).toISOString()
         : null;
 
-      // Prepare data matching your exact table structure
+      // Prepare data
       const eventData = {
         name: formData.name,
         description: formData.description || null,
@@ -119,35 +121,22 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
         datePosted: new Date().toISOString(),
         metaTags: metaTags,
         creatorID: user.id,
-        buildingIDs: [], // Empty array for now, add building selection if needed
-        isApproved: false, // Default to false, requires approval
+        buildingIDs: [],
+        isApproved: false,
       };
 
-      console.log("Attempting to insert event:", eventData);
-
       // Insert into Supabase
-      const { data, error: insertError } = await supabase
-        .from('event') // Table name is 'event' (singular, lowercase)
+      const { error: insertError } = await supabase
+        .from('event')
         .insert([eventData])
         .select();
 
-      console.log("Insert result:", { data, insertError });
-
       if (insertError) {
-        console.error("Raw insertError:", insertError);
-        console.error("insertError type:", typeof insertError);
-        console.error("insertError constructor:", insertError?.constructor?.name);
-        console.error("Supabase insert error details:", {
-          message: insertError.message,
-          details: insertError.details,
-          hint: insertError.hint,
-          code: insertError.code
-        });
-        throw new Error(insertError.message || JSON.stringify(insertError) || "Failed to insert event");
+        setError(insertError.message || "Failed to create event. Please try again.");
+        setIsSubmitting(false);
+        return;
       }
 
-      console.log("Event created successfully:", data);
-      
       // Reset form after successful submission
       setFormData({
         name: "",
@@ -160,29 +149,44 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
         timeEnd: "",
       });
       setMetaTags([]);
-      
+
       // Show success message
-      alert("Event created successfully! It will be visible once approved.");
-      
-      // Optional: Close sidebar or navigate elsewhere
-      // setIsOpen(false);
-      
-    } catch (err: any) {
-      console.error("Error creating event - Full error:", err);
-      console.error("Error type:", typeof err);
-      console.error("Error keys:", Object.keys(err));
-      console.error("Error message:", err?.message);
-      console.error("Error stack:", err?.stack);
-      
-      const errorMessage = err?.message || err?.toString() || "Failed to create event. Please try again.";
+      setShowSuccess(true);
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to create event. Please try again.";
       setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Show success state
+  if (showSuccess) {
+    return (
+      <div className={`w-full h-full flex flex-col items-center justify-center ${className}`}>
+        <CheckCircle
+          className="w-20 h-20 text-green-500 mb-4 fade-blur-in-stagger"
+          style={{ '--index': 0 } as React.CSSProperties}
+        />
+        <h2
+          className="text-2xl font-semibold text-gray-800 mb-2 text-center fade-blur-in-stagger"
+          style={{ '--index': 1 } as React.CSSProperties}
+        >
+          Success!
+        </h2>
+        <p
+          className="text-gray-600 text-center fade-blur-in-stagger"
+          style={{ '--index': 2 } as React.CSSProperties}
+        >
+          Event is awaiting approval
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className={`w-full ${className}`}>
+    <div className={`w-full h-full ${className}`}>
       {/* Heading */}
       <div className="mb-3 flex items-center gap-2">
         <button
@@ -210,7 +214,7 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
             htmlFor="event-name"
             className="font-medium text-sm mb-1 block"
           >
-            Event Name
+            Event Name *
           </label>
           <input
             id="event-name"
@@ -281,7 +285,19 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
 
         {/* Location */}
         <div className="mb-3">
-          <div className="font-medium text-sm mb-1">Location</div>
+          <div className="font-medium text-sm mb-1">Location *</div>
+          <input
+            type="hidden"
+            name="markerLat"
+            value={formData.markerLat}
+            required
+          />
+          <input
+            type="hidden"
+            name="markerLng"
+            value={formData.markerLng}
+            required
+          />
           {formData.markerLat && formData.markerLng ? (
             <div className="flex items-center gap-2">
               <div className="flex-1 p-2 border border-neutral-200 rounded-lg bg-neutral-50 text-sm text-gray-700">
@@ -331,7 +347,7 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
 
         {/* Start Date and Time */}
         <div className="mb-3">
-          <div className="font-medium text-sm mb-1">Start Date & Time</div>
+          <div className="font-medium text-sm mb-1">Start Date & Time *</div>
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label htmlFor="event-date-start" className="sr-only">
@@ -343,6 +359,7 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
                 name="dateStart"
                 value={formData.dateStart}
                 onChange={handleChange}
+                required
                 className="w-full p-2 border border-neutral-200 rounded-lg outline-none focus:border-neutral-400 transition-colors duration-150 ease-out-2 cursor-pointer"
               />
             </div>
@@ -356,6 +373,7 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
                 name="timeStart"
                 value={formData.timeStart}
                 onChange={handleChange}
+                required
                 className="w-full p-2 border border-neutral-200 rounded-lg outline-none focus:border-neutral-400 transition-colors duration-150 ease-out-2 cursor-pointer"
               />
             </div>

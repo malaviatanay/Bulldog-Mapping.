@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Check, Trash } from 'lucide-react';
 
 type EventCardMinVariant = 'live' | 'upcoming' | 'past';
 
@@ -13,6 +14,10 @@ type EventCardMinProps = {
   description?: string | null;
   onClick?: () => void;
   variant?: EventCardMinVariant;
+  isAdmin?: boolean;
+  eventId?: string;
+  onApprove?: (eventId: string) => void;
+  onDelete?: (eventId: string) => void;
 };
 
 const EventCardMin: React.FC<EventCardMinProps> = ({
@@ -21,7 +26,12 @@ const EventCardMin: React.FC<EventCardMinProps> = ({
   dateStart,
   description,
   onClick,
-  variant = 'upcoming'
+  variant = 'upcoming',
+  isAdmin = false,
+  isApproved = true,
+  eventId,
+  onApprove,
+  onDelete
 }) => {
   const [timeText, setTimeText] = useState('');
 
@@ -95,10 +105,13 @@ const EventCardMin: React.FC<EventCardMinProps> = ({
 
   const config = variantConfig[variant];
 
+  // Only allow onClick if event is approved OR if not admin
+  const handleCardClick = !isApproved && isAdmin ? undefined : onClick;
+
   return (
     <div
-      onClick={onClick}
-      className={`flex items-start justify-between p-3 bg-white rounded-lg border border-neutral-200 ${config.hoverBorder} hover:scale-[1.02] cursor-pointer transition-[transform_border-color_box-shadow] duration-150 ease-out-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:shadow-[0_2px_4px_rgba(0,0,0,0.08)] ${config.saturation}`}
+      onClick={handleCardClick}
+      className={`flex items-start justify-between p-3 bg-white rounded-lg border border-neutral-200 ${config.hoverBorder} ${handleCardClick ? 'hover:scale-[1.02] cursor-pointer' : 'cursor-default'} transition-[transform_border-color_box-shadow] duration-150 ease-out-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:shadow-[0_2px_4px_rgba(0,0,0,0.08)] ${config.saturation}`}
     >
       <div className="flex-1">
         <div className="flex items-center mb-1">
@@ -121,10 +134,34 @@ const EventCardMin: React.FC<EventCardMinProps> = ({
           <span>{timeText}</span>
         </div>
       </div>
-      <div className="ml-2">
+      <div className="ml-2 flex flex-col gap-2">
         <span className={`button-depth text-xs font-medium text-white ${config.tag.bgColor} px-2 py-1 rounded whitespace-nowrap`}>
           {config.tag.text}
         </span>
+        {isAdmin && !isApproved && eventId && (
+          <div className="flex gap-1 justify-end">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onApprove?.(eventId);
+              }}
+              className="button-depth group p-1.5 rounded-lg border border-transparent hover:border-green-500 hover:bg-green-500 transition-[transform_background-color_border-color] duration-150 ease-out-2 hover:scale-105 active:scale-95"
+              title="Approve event"
+            >
+              <Check className="w-3.5 h-3.5 group-hover:text-white transition-colors duration-150 ease-out-2" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete?.(eventId);
+              }}
+              className="button-depth group p-1.5 rounded-lg border border-transparent hover:border-red-500 hover:bg-red-500 transition-[transform_background-color_border-color] duration-150 ease-out-2 hover:scale-105 active:scale-95"
+              title="Delete event"
+            >
+              <Trash className="w-3.5 h-3.5 group-hover:text-white transition-colors duration-150 ease-out-2" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
