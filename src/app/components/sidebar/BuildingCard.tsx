@@ -18,7 +18,7 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
   const firstImage = selectedBuilding.image_URLs?.[0];
 
   return (
-    <div className={`building-card ${className} `}>
+    <div key={selectedBuilding.id} className={`building-card ${className} `}>
       {/* Heading */}
       <div className="mb-3">
         <div className="flex items-center gap-2 mb-2">
@@ -32,7 +32,7 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
         key={selectedBuilding.id}
         className="relative w-full h-48 bg-gray-100 flex items-center justify-center mb-3  rounded-lg animate-image-intro"
       >
-        {firstImage ? (
+        {firstImage && firstImage != null ? (
           <div className="w-full h-full relative ">
             {/* Blurred glow image underneath */}
             <Image

@@ -10,7 +10,7 @@ export default function App() {
         width={500}
         height={500}
         alt="Fresno State Library at sunset"
-        className="absolute top-0 blur-sm mask-b-from-50% z-10 scale-105 left-0 w-full h-full object-cover pointer-events-none"
+        className="absolute top-0 blur-sm z-10 scale-105 left-0 w-full h-full object-cover pointer-events-none"
       ></Image>
       <div className="bg-white relative z-40 p-8 rounded-xl border border-neutral-200 max-w-sm w-full">
         <div className="mb-6 text-center">

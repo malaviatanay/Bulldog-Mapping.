@@ -39,7 +39,7 @@ export default function EventCard({ className = "" }: EventCardProps) {
       {/* Icon placeholder (similar to building fallback) */}
       <div
         key={selectedEvent.id}
-        className="relative w-full h-48 bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center rounded-lg mb-3 animate-image-intro"
+        className="relative w-full h-48 bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center rounded-lg mb-3 "
       >
         <Calendar className="w-16 h-16 text-white" />
       </div>

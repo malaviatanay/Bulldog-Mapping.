@@ -3,7 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, X, MapPin } from "lucide-react";
 import { useMapContext } from "@/context/MapContext";
-import EventCardMin from "./EventCardMin";
+import { useSidebar } from "@/context/SidebarContext";
+import { Tables } from "@/types/supabase";
+
+type Building = Tables<"building">;
+type Event = Tables<"event">;
 
 type Category = {
   name: string;
@@ -11,34 +15,34 @@ type Category = {
   checked?: boolean;
 };
 
-type SearchSuggestion = {
-  id: number;
-  name: string;
-  type: string;
-};
+// type SearchSuggestion = {
+//   building?: Building;
+//   event?: Event;
+//   id: number;
+//   name: string;
+//   type: "Building" | "Parking" | "Food" | "Venue" | "Landmark";
+
+// };
+type SearchSuggestion = Building | Event;
 
 const SearchBar = () => {
+  const {
+    buildings,
+    events,
+    buildingPolygons,
+    setSelectedBuilding,
+    setSelectedEvent,
+    flyTo,
+  } = useMapContext();
+  const { setIsOpen, isOpen, setView } = useSidebar();
+  console.log("Buildings in SearchBar:", buildings);
+
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
-  const [showEvents, setShowEvents] = useState<boolean>(false);
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
-  const [mounted, setMounted] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
-
-  const { events = [] } = useMapContext();
-
-  // Ensure component is mounted (client-side only)
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Sort events: approved/live first, then by date
-  const sortedEvents = mounted && events?.length > 0 ? [...events].sort((a, b) => {
-    if (a.isApproved && !b.isApproved) return -1;
-    if (!a.isApproved && b.isApproved) return 1;
-    return new Date(a.dateStart).getTime() - new Date(b.dateStart).getTime();
-  }) : [];
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const categories: Category[] = [
     { name: "Campus Layer", icon: "🗺️", checked: true },
@@ -52,35 +56,40 @@ const SearchBar = () => {
     { name: "Restrooms", icon: "🚻" },
   ];
 
-  const allLocations: SearchSuggestion[] = [
-    { id: 1, name: "Henry Madden Library", type: "Building" },
-    { id: 2, name: "Student Union", type: "Building" },
-    { id: 3, name: "Science 1 Building", type: "Building" },
-    { id: 4, name: "Peters Business Building", type: "Building" },
-    { id: 5, name: "Kremen Education Building", type: "Building" },
-    { id: 6, name: "Save Mart Center", type: "Venue" },
-    { id: 7, name: "Engineering East", type: "Building" },
-    { id: 8, name: "Peace Garden", type: "Landmark" },
-    { id: 9, name: "Parking Lot P1", type: "Parking" },
-    { id: 10, name: "Parking Lot P2", type: "Parking" },
-    { id: 11, name: "Taco Bell Cantina", type: "Food" },
-    { id: 12, name: "Starbucks", type: "Food" },
-  ];
-
+  // Filter suggestions based on search query
   useEffect(() => {
     if (searchQuery.length > 0) {
-      const filtered = allLocations.filter((location) =>
-        location.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setSuggestions(filtered.slice(0, 5));
+      const validEvents = events.filter((event) => {
+        const now = new Date();
+        const eventEnd = event.dateEnd ? new Date(event.dateEnd) : null;
+        let isPast = true;
+        if (eventEnd) {
+          isPast = now > eventEnd;
+        }
+        return event.isApproved && !isPast;
+      });
+
+      const allLocations: SearchSuggestion[] = [...buildings, ...validEvents];
+      const filtered = allLocations.filter((location) => {
+        if (location.name.toLowerCase().includes(searchQuery.toLowerCase()))
+          return true;
+        else if (
+          location.metaTags?.some((tag) =>
+            tag.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+        )
+          return true;
+        else return false;
+      });
+      setSuggestions(filtered.slice(0, 7)); // Show max 7 suggestions
       setShowSuggestions(true);
-      setShowEvents(false);
     } else {
       setSuggestions([]);
       setShowSuggestions(false);
     }
-  }, [searchQuery]);
+  }, [searchQuery, buildings, events]);
 
+  // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -88,7 +97,6 @@ const SearchBar = () => {
         !searchRef.current.contains(event.target as Node)
       ) {
         setShowSuggestions(false);
-        setShowEvents(false);
       }
     };
 
@@ -96,35 +104,77 @@ const SearchBar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSuggestionClick = (suggestion: SearchSuggestion) => {
-    setSearchQuery(suggestion.name);
-    setShowSuggestions(false);
-    setShowEvents(false);
-    console.log("Selected:", suggestion);
+  useEffect(() => {
+    if (inputRef.current && isOpen) {
+      console.log("Focusing input");
+      inputRef.current.focus();
+    }
+  }, [isOpen]);
+
+  // Helper to calculate center of a GeoJSON polygon
+  const getCenterFromGeoJSON = (geojson: GeoJSON.Feature): [number, number] => {
+    if (!geojson.geometry || geojson.geometry.type !== "Polygon") {
+      return [0, 0];
+    }
+    const coords =
+      geojson.geometry.type === "Polygon"
+        ? geojson.geometry.coordinates[0]
+        : [];
+
+    // Calculate average lng/lat
+    const sumLng = coords.reduce(
+      (sum: number, coord: number[]) => sum + coord[0],
+      0
+    );
+    const sumLat = coords.reduce(
+      (sum: number, coord: number[]) => sum + coord[1],
+      0
+    );
+
+    return [sumLng / coords.length, sumLat / coords.length];
   };
 
-  const handleEventClick = (event: any) => {
-    console.log("Event clicked:", event);
-    setShowEvents(false);
+  const handleSuggestionClick = (suggestion: SearchSuggestion) => {
+    // if building, use any unique building property to differentiate
+    if ("hoursOpen" in suggestion) {
+      const geoData = buildingPolygons.find(
+        (bp) => bp.building_id === suggestion.id
+      )?.geojson;
+
+      if (geoData) {
+        const [lng, lat] = getCenterFromGeoJSON(
+          geoData as unknown as GeoJSON.Feature
+        );
+        if (lng && lat) {
+          flyTo(lng, lat, 17);
+        }
+      }
+
+      setSelectedBuilding(suggestion);
+      setView("building");
+    }
+    // else event
+    else {
+      setSelectedEvent(suggestion);
+      setView("event");
+      flyTo(suggestion.longitude, suggestion.latitude, 17);
+    }
+
+    setSearchQuery(suggestion.name);
+    setShowSuggestions(false);
   };
 
   const handleSearch = () => {
     if (searchQuery) {
+      // TODO: Add search logic here
       console.log("Searching for:", searchQuery);
       setShowSuggestions(false);
-      setShowEvents(false);
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleSearch();
-    }
-  };
-
-  const handleInputFocus = () => {
-    if (searchQuery.length === 0 && mounted) {
-      setShowEvents(true);
     }
   };
 
@@ -137,12 +187,12 @@ const SearchBar = () => {
         <div className="flex items-center p-3 border-b border-gray-200">
           <Search className="mr-3 w-5 h-5 text-gray-400" />
           <input
+            ref={inputRef}
             type="text"
             placeholder="Search buildings, parking, food..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={handleKeyPress}
-            onFocus={handleInputFocus}
+            // onKeyPress={handleKeyPress}
             className="flex-1 outline-none border-none text-sm text-gray-700 placeholder-gray-400"
           />
           {searchQuery && (
@@ -150,7 +200,6 @@ const SearchBar = () => {
               onClick={() => {
                 setSearchQuery("");
                 setShowSuggestions(false);
-                if (mounted) setShowEvents(true);
               }}
               className="mr-2 p-1 rounded hover:bg-gray-100 transition-colors duration-150 ease-out-2 cursor-pointer"
             >
@@ -159,47 +208,17 @@ const SearchBar = () => {
           )}
           <button
             onClick={handleSearch}
-            className="bg-highlight text-white px-4 py-2 rounded-lg ml-2 cursor-pointer text-sm hover:bg-highlight-hover transition-[transform_background-color] duration-150 ease-out-2 hover:scale-105 active:scale-95"
+            className="bg-highlight button-depth text-white px-4 py-2 rounded-lg ml-2 cursor-pointer text-sm hover:bg-highlight-hover transition-[transform_background-color] duration-150 ease-out-2 hover:scale-105 active:scale-95"
           >
             Search
           </button>
-          <button
+          {/* <button
             onClick={() => setShowFilters(!showFilters)}
             className="ml-2 p-2 bg-highlight text-white rounded-lg cursor-pointer hover:bg-highlight-hover transition-[transform_background-color] duration-150 ease-out-2 hover:scale-105 active:scale-95"
           >
             <MapPin className="w-5 h-5" />
-          </button>
+          </button> */}
         </div>
-
-        {/* Events List - Client-side only with safety checks */}
-        {mounted && showEvents && !showSuggestions && sortedEvents.length > 0 && (
-          <div className="bg-white border-b border-gray-200 max-h-96 overflow-y-auto">
-            <div className="px-3 py-2 bg-gray-50 border-b border-gray-200 sticky top-0">
-              <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                📅 Campus Events
-              </h3>
-            </div>
-            {sortedEvents.slice(0, 8).map((event) => (
-              <EventCardMin
-                key={event.id}
-                name={event.name || "Unnamed Event"}
-                buildingIDs={event.buildingIDs}
-                dateStart={event.dateStart}
-                dateEnd={event.dateEnd}
-                isApproved={event.isApproved}
-                description={event.description}
-                onClick={() => handleEventClick(event)}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Show message if no events available */}
-        {mounted && showEvents && !showSuggestions && sortedEvents.length === 0 && (
-          <div className="p-4 text-center text-gray-500 text-sm">
-            No events scheduled at this time.
-          </div>
-        )}
 
         {/* Autocomplete Suggestions */}
         {showSuggestions && suggestions.length > 0 && (
@@ -211,18 +230,18 @@ const SearchBar = () => {
                 className="flex items-center justify-between p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors duration-150 ease-out-2"
               >
                 <div className="flex items-center">
-                  <span className="mr-3 text-lg">
+                  {/* <span className="mr-3 text-lg">
                     {suggestion.type === "Building" && "🏢"}
                     {suggestion.type === "Parking" && "🅿️"}
                     {suggestion.type === "Food" && "🍽️"}
                     {suggestion.type === "Venue" && "🏟️"}
                     {suggestion.type === "Landmark" && "🌳"}
-                  </span>
+                  </span> */}
                   <div>
                     <p className="text-sm font-medium text-gray-800">
                       {suggestion.name}
                     </p>
-                    <p className="text-xs text-gray-500">{suggestion.type}</p>
+                    {/* <p className="text-xs text-gray-500">{suggestion.type}</p> */}
                   </div>
                 </div>
                 <span className="text-gray-400 text-sm">→</span>
@@ -239,7 +258,7 @@ const SearchBar = () => {
         )}
 
         {/* Filters Section */}
-        {showFilters && (
+        {/* {showFilters && (
           <div className="max-h-96 overflow-y-auto">
             <div className="flex justify-between items-center p-3 border-b border-gray-200">
               <h3 className="font-semibold m-0 text-gray-700">Filters</h3>
@@ -268,7 +287,7 @@ const SearchBar = () => {
               </div>
             ))}
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

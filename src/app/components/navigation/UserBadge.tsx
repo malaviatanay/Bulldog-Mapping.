@@ -42,7 +42,7 @@ export default function UserBadge({ userData }: { userData: User | null }) {
           <span className="text-sm font-medium">
             {user && user.user_metadata.name
               ? user.user_metadata.name.split(" ")[0]
-              : "Victor E Bulldog"}
+              : "V.E. Bulldog"}
           </span>
         </button>
       </DropdownMenuTrigger>
