@@ -23,7 +23,6 @@ export async function getBuildings() {
   return building;
 }
 
-
 export async function getEvents() {
   const supabase = await createClient();
 
@@ -31,4 +30,24 @@ export async function getEvents() {
   if (error) throw error;
 
   return data;
+}
+
+export async function getUserAdminStatus() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+  if (user) console.log("User:", user);
+
+  const userId = user.id;
+  const { data, error } = await supabase
+    .from("campusAdmin")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+  if (error) throw error;
+
+  return data?.user_id || false;
 }

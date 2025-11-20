@@ -1,4 +1,4 @@
-import { getBuildingPolygons, getBuildings, getEvents } from "@/data";
+import { getBuildingPolygons, getBuildings, getEvents, getUserAdminStatus } from "@/data";
 import Map from "./components/Map";
 import { MapProvider } from "@/context/MapContext";
 import MapTest from "./components/MapTest";
@@ -8,6 +8,7 @@ import Navbar from "./components/navigation/Navbar";
 import { createClient } from "@/utils/supabase/server";
 
 export default async function Home() {
+  const test = await getUserAdminStatus();
   const supabase = await createClient();
   const userData = supabase.auth.getUser();
   const buildingData = getBuildings();

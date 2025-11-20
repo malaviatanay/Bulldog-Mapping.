@@ -26,8 +26,14 @@ type Category = {
 type SearchSuggestion = Building | Event;
 
 const SearchBar = () => {
-  const { buildings, events, buildingPolygons, setSelectedBuilding, setSelectedEvent, flyTo } =
-    useMapContext();
+  const {
+    buildings,
+    events,
+    buildingPolygons,
+    setSelectedBuilding,
+    setSelectedEvent,
+    flyTo,
+  } = useMapContext();
   const { setIsOpen, isOpen, setView } = useSidebar();
   console.log("Buildings in SearchBar:", buildings);
 
@@ -54,9 +60,17 @@ const SearchBar = () => {
   useEffect(() => {
     if (searchQuery.length > 0) {
       const allLocations: SearchSuggestion[] = [...buildings, ...events];
-      const filtered = allLocations.filter((location) =>
-        location.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      const filtered = allLocations.filter((location) => {
+        if (location.name.toLowerCase().includes(searchQuery.toLowerCase()))
+          return true;
+        else if (
+          location.metaTags?.some((tag) =>
+            tag.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+        )
+          return true;
+        else return false;
+      });
       setSuggestions(filtered.slice(0, 5)); // Show max 5 suggestions
       setShowSuggestions(true);
     } else {
@@ -82,34 +96,43 @@ const SearchBar = () => {
 
   useEffect(() => {
     if (inputRef.current && isOpen) {
-      console.log('Focusing input');
+      console.log("Focusing input");
       inputRef.current.focus();
     }
   }, [isOpen]);
 
   // Helper to calculate center of a GeoJSON polygon
   const getCenterFromGeoJSON = (geojson: GeoJSON.Feature): [number, number] => {
-    const coords = geojson.geometry.type === "Polygon"
-      ? geojson.geometry.coordinates[0]
-      : [];
+    const coords =
+      geojson.geometry.type === "Polygon"
+        ? geojson.geometry.coordinates[0]
+        : [];
 
     // Calculate average lng/lat
-    const sumLng = coords.reduce((sum: number, coord: number[]) => sum + coord[0], 0);
-    const sumLat = coords.reduce((sum: number, coord: number[]) => sum + coord[1], 0);
+    const sumLng = coords.reduce(
+      (sum: number, coord: number[]) => sum + coord[0],
+      0
+    );
+    const sumLat = coords.reduce(
+      (sum: number, coord: number[]) => sum + coord[1],
+      0
+    );
 
     return [sumLng / coords.length, sumLat / coords.length];
   };
 
   const handleSuggestionClick = (suggestion: SearchSuggestion) => {
     // if building, use any unique building property to differentiate
-    if ('hoursOpen' in suggestion) {
+    if ("hoursOpen" in suggestion) {
       console.log("Building selected:", suggestion);
       const geoData = buildingPolygons.find(
         (bp) => bp.building_id === suggestion.id
       )?.geojson;
 
       if (geoData) {
-        const [lng, lat] = getCenterFromGeoJSON(geoData as unknown as GeoJSON.Feature);
+        const [lng, lat] = getCenterFromGeoJSON(
+          geoData as unknown as GeoJSON.Feature
+        );
         flyTo(lng, lat, 17);
       }
 
