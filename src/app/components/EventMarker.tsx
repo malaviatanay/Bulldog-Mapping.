@@ -70,17 +70,57 @@ export default function EventMarker({
   const [timeUntil, setTimeUntil] = useState(() =>
     event.dateStart ? getTimeUntilStart(event.dateStart) : null
   );
+  const [variant, setVariant] = useState<'live' | 'upcoming' | 'past'>('upcoming');
 
   useEffect(() => {
     if (!event.dateStart) return;
 
+    // Determine variant based on event timing
+    const updateVariant = () => {
+      const now = new Date();
+      const startDate = new Date(event.dateStart);
+      const endDate = event.dateEnd ? new Date(event.dateEnd) : null;
+
+      if (now >= startDate && (!endDate || now <= endDate)) {
+        setVariant('live');
+      } else if (now < startDate) {
+        setVariant('upcoming');
+      } else {
+        setVariant('past');
+      }
+    };
+
+    updateVariant();
+
     // Update every minute
     const interval = setInterval(() => {
       setTimeUntil(getTimeUntilStart(event.dateStart));
+      updateVariant();
     }, 60000); // 60000ms = 1 minute
 
     return () => clearInterval(interval);
-  }, [event.dateStart]);
+  }, [event.dateStart, event.dateEnd]);
+
+  // Variant styling configurations
+  const variantConfig = {
+    live: {
+      bgColor: 'bg-red-500',
+      saturation: 'saturate-100',
+      ping: true
+    },
+    upcoming: {
+      bgColor: 'bg-blue-500',
+      saturation: 'saturate-100',
+      ping: false
+    },
+    past: {
+      bgColor: 'bg-gray-500',
+      saturation: 'saturate-0',
+      ping: false
+    }
+  };
+
+  const config = variantConfig[variant];
 
   // Simple dot marker for zoomed out view
   if (isSimple) {
@@ -90,12 +130,13 @@ export default function EventMarker({
           e.stopPropagation();
           onClick();
         }}
-        className={` group relative w-fit min-w-4 min-h-4  active:scale-97 border-1 border-neutral-100 rounded-md cursor-pointer flex justify-center items-center shadow-md  h-fit transition-[transform] ease-out-3 duration-300 button-depth  ${
-          timeUntil?.urgent ? "bg-red-500 animate-pulse" : "bg-blue-500"
-        }`}
+        className={`group relative w-fit min-w-4 min-h-4 active:scale-97 border-1 border-neutral-100 rounded-md cursor-pointer flex justify-center items-center shadow-md h-fit transition-[transform] ease-out-3 duration-300 button-depth ${config.bgColor} ${config.saturation}`}
       >
-        <div className="absolute top-0 left-0 w-4/3 h-3/2  -translate-1/7 z-0"></div>
-        <span className="flex  text-base font-medium opacity-0 group-hover:opacity-100 pointer-events-none group-hover:w-fit transition-[height_width_opacity_blur] blur-xs group-hover:blur-none ease-out-3 duration-300 text-nowrap p-1  group-hover:h-auto w-0 h-0 text-white   overflow-hidden">
+        {config.ping && (
+          <span className="absolute inline-flex h-full w-full rounded-md bg-red-400 opacity-75 animate-ping"></span>
+        )}
+        <div className="absolute top-0 left-0 w-4/3 h-3/2 -translate-1/7 z-0"></div>
+        <span className="flex text-base font-medium opacity-0 group-hover:opacity-100 pointer-events-none group-hover:w-fit transition-[height_width_opacity_blur] blur-xs group-hover:blur-none ease-out-3 duration-300 text-nowrap p-1 group-hover:h-auto w-0 h-0 text-white overflow-hidden">
           <span>{event.name}</span>
         </span>
       </div>
@@ -109,21 +150,20 @@ export default function EventMarker({
         e.stopPropagation();
         onClick();
       }}
-      className={`bg-white w-[200px] border-1 overflow-clip border-neutral-100 button-depth hover:scale-105 active:scale-97 transition-transform ease-out-2 duration-150 rounded-xl shadow-md pointer-events-auto select-all relative z-40 cursor-pointer hover:shadow-xl ${
-        timeUntil?.urgent ? "bg-red-500" : "bg-blue-500"
-      }`}
+      className={`bg-white w-[200px] border-1 overflow-clip border-neutral-100 button-depth hover:scale-105 active:scale-97 transition-transform ease-out-2 duration-150 rounded-xl shadow-md pointer-events-auto select-all relative z-40 cursor-pointer hover:shadow-xl ${config.saturation}`}
     >
       {/* Header with event name and countdown */}
       <div
-        className={`px-3 py-2 rounded-t-lg ${
-          timeUntil?.urgent ? "bg-red-500" : "bg-blue-500"
-        } text-white`}
+        className={`px-3 py-2 rounded-t-lg ${config.bgColor} text-white relative`}
       >
-        <div className="font-semibold text-sm truncate">
+        {config.ping && (
+          <span className="absolute inset-0 rounded-t-lg bg-red-400 opacity-75 animate-ping"></span>
+        )}
+        <div className="font-semibold text-sm truncate relative z-10">
           {event.name || "Event"}
         </div>
         {timeUntil && (
-          <div className="text-xs opacity-90 mt-0.5">
+          <div className="text-xs opacity-90 mt-0.5 relative z-10">
             {timeUntil.text === "Started"
               ? "🔴 Started"
               : `⏱️ in ${timeUntil.text}`}

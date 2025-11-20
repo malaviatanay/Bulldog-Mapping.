@@ -7,6 +7,7 @@ import BuildingCard from "../sidebar/BuildingCard";
 import EventCard from "../sidebar/EventCard";
 import SearchBar from "../SearchBar";
 import EventCreator from "../EventCreator";
+import EventList from "../EventList";
 
 export default function Sidebar() {
   const { isOpen, setIsOpen, view, setView } = useSidebar();
@@ -42,13 +43,27 @@ export default function Sidebar() {
       <menu
         className={`bg-white p-4 rounded-2xl overflow-y-auto sm:rounded-xl ${
           isOpen ? "w-full" : "pointer-events-none"
-        } overflow-clip w-[calc(100%-2rem)] sm:w-sm h-[calc(100%-1rem)] sm:h-full border border-neutral-200 z-20`}
+        } overflow-clip w-[calc(100%-2rem)] sm:w-sm h-[calc(100%-1rem)] sm:h-full border border-neutral-200 z-20 relative`}
       >
-        {/* CONTENT WOULD GO HERE */}
-        {view === "building" && <BuildingCard></BuildingCard>}
-        {view === "event" && <EventCard></EventCard>}
-        {view === "search" && <SearchBar></SearchBar>}
-        {view === "eventCreator" && <EventCreator></EventCreator>}
+        {/* Background Logo - hidden on eventCreator and eventList views */}
+        {view !== "eventCreator" && view !== "eventList" && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 mix-blend-hard-light opacity-5">
+            <img
+              src="/logo.png"
+              alt=""
+              className="w-[300px] h-[300px] object-contain"
+            />
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="relative z-10">
+          {view === "building" && <BuildingCard></BuildingCard>}
+          {view === "event" && <EventCard></EventCard>}
+          {view === "search" && <SearchBar></SearchBar>}
+          {view === "eventCreator" && <EventCreator></EventCreator>}
+          {view === "eventList" && <EventList></EventList>}
+        </div>
       </menu>
     </aside>
   );

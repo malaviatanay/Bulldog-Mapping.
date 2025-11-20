@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { X, MapPin } from "lucide-react";
+import { X, MapPin, ArrowLeft } from "lucide-react";
 import { useMapContext } from "@/context/MapContext";
 import { useSidebar } from "@/context/SidebarContext";
 
@@ -23,7 +23,7 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
   const [metaTags, setMetaTags] = useState<string[]>([]);
   const [currentTag, setCurrentTag] = useState("");
   const MapCtx = useMapContext();
-  const { setIsOpen } = useSidebar();
+  const { setIsOpen, setView } = useSidebar();
 
   // Watch for dropped pin coordinates
   useEffect(() => {
@@ -87,7 +87,15 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
   return (
     <div className={`w-full ${className}`}>
       {/* Heading */}
-      <div className="mb-3">
+      <div className="mb-3 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setView("eventList")}
+          className="button-depth group p-2 rounded-lg border border-transparent hover:border-highlight-hover hover:bg-highlight transition-[transform_background-color_border-color] duration-150 ease-out-2 cursor-pointer hover:scale-105 active:scale-95"
+          aria-label="Back to events"
+        >
+          <ArrowLeft className="w-5 h-5 group-hover:text-white transition-colors duration-150 ease-out-2" />
+        </button>
         <h2 className="text-xl font-semibold">Create an Event</h2>
       </div>
 

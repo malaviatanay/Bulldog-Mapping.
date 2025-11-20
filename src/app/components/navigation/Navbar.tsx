@@ -44,7 +44,7 @@ export default function Navbar({ className = "", user}: NavbarProps) {
               className="button-depth group p-2 rounded-lg border border-transparent hover:border-highlight-hover hover:bg-highlight transition-[transform_background-color_border-color] duration-150 ease-out-2 cursor-pointer hover:scale-105 active:scale-95 disabled:cursor-not-allowed"
               aria-label="Events"
               onClick={() => {
-                setView("eventCreator");
+                setView("eventList");
                 setIsOpen(true);
               }}
             >
