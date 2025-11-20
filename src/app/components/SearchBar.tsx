@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, X, MapPin } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useMapContext } from "@/context/MapContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { Tables } from "@/types/supabase";
+import SearchSuggestionBuilding from "./SearchSuggestionBuilding";
+import SearchSuggestionEvent from "./SearchSuggestionEvent";
 
 type Building = Tables<"building">;
 type Event = Tables<"event">;
@@ -180,80 +182,74 @@ const SearchBar = () => {
 
   return (
     <div className="w-full">
+      {/* Main Heading */}
+      <div className="mb-3">
+        <h2 className="text-xl font-semibold">Search</h2>
+      </div>
+
       <div
-        className="bg-white rounded-lg border border-neutral-200 overflow-hidden"
+        className="bg-white rounded-lg border border-neutral-200 overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
         ref={searchRef}
       >
-        <div className="flex items-center p-3 border-b border-gray-200">
-          <Search className="mr-3 w-5 h-5 text-gray-400" />
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Search buildings, parking, food..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            // onKeyPress={handleKeyPress}
-            className="flex-1 outline-none border-none text-sm text-gray-700 placeholder-gray-400"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => {
-                setSearchQuery("");
-                setShowSuggestions(false);
-              }}
-              className="mr-2 p-1 rounded hover:bg-gray-100 transition-colors duration-150 ease-out-2 cursor-pointer"
-            >
-              <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-            </button>
-          )}
+        <div className="flex items-center p-3 gap-2 border-b border-gray-200">
+          <div className="flex-1 flex items-center gap-2 px-3 py-2">
+            <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Search buildings, events..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 outline-none border-none text-sm text-gray-700 placeholder-gray-400 bg-transparent"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setShowSuggestions(false);
+                }}
+                className="p-1 rounded hover:bg-gray-100 transition-colors duration-150 ease-out-2 cursor-pointer flex-shrink-0"
+              >
+                <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+              </button>
+            )}
+          </div>
           <button
             onClick={handleSearch}
-            className="bg-highlight button-depth text-white px-4 py-2 rounded-lg ml-2 cursor-pointer text-sm hover:bg-highlight-hover transition-[transform_background-color] duration-150 ease-out-2 hover:scale-105 active:scale-95"
+            className="button-depth bg-highlight text-white px-4 py-2 rounded-lg cursor-pointer text-sm border border-highlight-hover hover:bg-highlight-hover transition-[transform_background-color] duration-150 ease-out-2 hover:scale-105 active:scale-95 flex-shrink-0"
           >
             Search
           </button>
-          {/* <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="ml-2 p-2 bg-highlight text-white rounded-lg cursor-pointer hover:bg-highlight-hover transition-[transform_background-color] duration-150 ease-out-2 hover:scale-105 active:scale-95"
-          >
-            <MapPin className="w-5 h-5" />
-          </button> */}
         </div>
 
         {/* Autocomplete Suggestions */}
         {showSuggestions && suggestions.length > 0 && (
-          <div className="bg-white border-b border-gray-200">
-            {suggestions.map((suggestion) => (
-              <div
-                key={suggestion.id}
-                onClick={() => handleSuggestionClick(suggestion)}
-                className="flex items-center justify-between p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors duration-150 ease-out-2"
-              >
-                <div className="flex items-center">
-                  {/* <span className="mr-3 text-lg">
-                    {suggestion.type === "Building" && "🏢"}
-                    {suggestion.type === "Parking" && "🅿️"}
-                    {suggestion.type === "Food" && "🍽️"}
-                    {suggestion.type === "Venue" && "🏟️"}
-                    {suggestion.type === "Landmark" && "🌳"}
-                  </span> */}
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">
-                      {suggestion.name}
-                    </p>
-                    {/* <p className="text-xs text-gray-500">{suggestion.type}</p> */}
-                  </div>
-                </div>
-                <span className="text-gray-400 text-sm">→</span>
-              </div>
-            ))}
+          <div className="bg-white border-t border-gray-200">
+            {suggestions.map((suggestion) => {
+              // Check if it's a building by looking for building-specific property
+              const isBuilding = "hoursOpen" in suggestion;
+
+              return isBuilding ? (
+                <SearchSuggestionBuilding
+                  key={suggestion.id}
+                  building={suggestion as Building}
+                  onClick={() => handleSuggestionClick(suggestion)}
+                />
+              ) : (
+                <SearchSuggestionEvent
+                  key={suggestion.id}
+                  event={suggestion as Event}
+                  onClick={() => handleSuggestionClick(suggestion)}
+                />
+              );
+            })}
           </div>
         )}
 
         {/* No Results Message */}
         {showSuggestions && searchQuery && suggestions.length === 0 && (
-          <div className="p-4 text-center text-gray-500 text-sm">
-            No results found for {`"${searchQuery}"`}.
+          <div className="p-4 text-center text-gray-500 text-sm border-t border-gray-200">
+            No results found for <span className="font-medium">&ldquo;{searchQuery}&rdquo;</span>
           </div>
         )}
 

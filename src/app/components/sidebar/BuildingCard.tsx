@@ -66,8 +66,8 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
 
         {selectedBuilding.hoursOpen && (
           <div className="mb-3">
-            <div className="font-medium text-sm mb-1">Hours</div>
-            <div className="text-gray-700 text-sm">
+            <div className="font-semibold text-xs text-gray-900 mb-1">Hours</div>
+            <div className="text-gray-500 text-base">
               {selectedBuilding.hoursOpen}
             </div>
           </div>
@@ -75,29 +75,30 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
 
         {selectedBuilding.daysOpen && (
           <div className="mb-3">
-            <div className="font-medium text-sm mb-1">Days</div>
-            <div className="text-gray-700 text-sm">
+            <div className="font-semibold text-xs text-gray-900 mb-1">Days</div>
+            <div className="text-gray-500 text-base">
               {selectedBuilding.daysOpen}
             </div>
           </div>
         )}
 
         {selectedBuilding.address && (
-          <div className="mb-2">
-            <span className="font-medium text-sm">Address: </span>
-            <span className="text-gray-700 text-sm">
+          <div className="mb-3">
+            <div className="font-semibold text-xs text-gray-900 mb-1">Address</div>
+            <div className="text-gray-500 text-base">
               {selectedBuilding.address}
-            </span>
+            </div>
           </div>
         )}
 
         {selectedBuilding.website && (
-          <div className="mb-2">
+          <div className="mb-3">
+            <div className="font-semibold text-xs text-gray-900 mb-1">Website</div>
             <a
               href={selectedBuilding.website}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-highlight hover:text-highlight-hover text-sm underline transition-colors duration-150 ease-out-2"
+              className="text-highlight hover:text-highlight-hover text-base underline transition-colors duration-150 ease-out-2"
             >
               Visit Website
             </a>
@@ -105,11 +106,11 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
         )}
 
         {selectedBuilding.floors && (
-          <div className="mb-2">
-            <span className="font-medium text-sm">Floors: </span>
-            <span className="text-gray-700 text-sm">
+          <div className="mb-3">
+            <div className="font-semibold text-xs text-gray-900 mb-1">Floors</div>
+            <div className="text-gray-500 text-base">
               {selectedBuilding.floors}
-            </span>
+            </div>
           </div>
         )}
       </div>
