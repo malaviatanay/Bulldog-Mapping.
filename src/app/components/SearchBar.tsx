@@ -37,7 +37,6 @@ const SearchBar = () => {
     flyTo,
   } = useMapContext();
   const { setIsOpen, isOpen, setView } = useSidebar();
-  console.log("Buildings in SearchBar:", buildings);
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showFilters, setShowFilters] = useState<boolean>(false);
@@ -108,7 +107,6 @@ const SearchBar = () => {
 
   useEffect(() => {
     if (inputRef.current && isOpen) {
-      console.log("Focusing input");
       inputRef.current.focus();
     }
   }, [isOpen]);
@@ -169,7 +167,6 @@ const SearchBar = () => {
   const handleSearch = () => {
     if (searchQuery) {
       // TODO: Add search logic here
-      console.log("Searching for:", searchQuery);
       setShowSuggestions(false);
     }
   };

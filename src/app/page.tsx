@@ -27,9 +27,6 @@ export default async function Home() {
     buildingPolygonData,
     userData,
   ]);
-  // console.log(buildings);
-  // console.log(events);
-  // console.log(buildingPolygons);
   return (
     <div className="max-h-dvh h-dvh relative w-full">
       <MapProvider

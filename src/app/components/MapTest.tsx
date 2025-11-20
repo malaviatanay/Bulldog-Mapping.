@@ -153,7 +153,6 @@ export default function MapTest() {
 
     // Handler for dropping pins
     const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
-      console.log("Pin dropped at:", e.lngLat);
       sdbr.setLastClickedCords([e.lngLat.lat, e.lngLat.lng]);
     };
 
@@ -267,7 +266,6 @@ export default function MapTest() {
         return event.isApproved && !isPast;
       })
       .forEach((event) => {
-        console.log(event);
         // Create a div element for the marker
         const el = document.createElement("div");
         el.className = "custom-marker";
