@@ -59,7 +59,17 @@ const SearchBar = () => {
   // Filter suggestions based on search query
   useEffect(() => {
     if (searchQuery.length > 0) {
-      const allLocations: SearchSuggestion[] = [...buildings, ...events];
+      const validEvents = events.filter((event) => {
+        const now = new Date();
+        const eventEnd = event.dateEnd ? new Date(event.dateEnd) : null;
+        let isPast = true;
+        if (eventEnd) {
+          isPast = now > eventEnd;
+        }
+        return event.isApproved && !isPast;
+      });
+
+      const allLocations: SearchSuggestion[] = [...buildings, ...validEvents];
       const filtered = allLocations.filter((location) => {
         if (location.name.toLowerCase().includes(searchQuery.toLowerCase()))
           return true;
@@ -71,7 +81,7 @@ const SearchBar = () => {
           return true;
         else return false;
       });
-      setSuggestions(filtered.slice(0, 5)); // Show max 5 suggestions
+      setSuggestions(filtered.slice(0, 7)); // Show max 7 suggestions
       setShowSuggestions(true);
     } else {
       setSuggestions([]);
@@ -103,6 +113,9 @@ const SearchBar = () => {
 
   // Helper to calculate center of a GeoJSON polygon
   const getCenterFromGeoJSON = (geojson: GeoJSON.Feature): [number, number] => {
+    if (!geojson.geometry || geojson.geometry.type !== "Polygon") {
+      return [0, 0];
+    }
     const coords =
       geojson.geometry.type === "Polygon"
         ? geojson.geometry.coordinates[0]
@@ -124,7 +137,6 @@ const SearchBar = () => {
   const handleSuggestionClick = (suggestion: SearchSuggestion) => {
     // if building, use any unique building property to differentiate
     if ("hoursOpen" in suggestion) {
-      console.log("Building selected:", suggestion);
       const geoData = buildingPolygons.find(
         (bp) => bp.building_id === suggestion.id
       )?.geojson;
@@ -133,7 +145,9 @@ const SearchBar = () => {
         const [lng, lat] = getCenterFromGeoJSON(
           geoData as unknown as GeoJSON.Feature
         );
-        flyTo(lng, lat, 17);
+        if (lng && lat) {
+          flyTo(lng, lat, 17);
+        }
       }
 
       setSelectedBuilding(suggestion);

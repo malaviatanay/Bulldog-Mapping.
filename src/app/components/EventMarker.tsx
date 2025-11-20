@@ -94,7 +94,7 @@ export default function EventMarker({
           timeUntil?.urgent ? "bg-red-500 animate-pulse" : "bg-blue-500"
         }`}
       >
-        <div className="absolute top-0 left-0 w-2/1 h-2/1  -translate-1/7 z-0"></div>
+        <div className="absolute top-0 left-0 w-4/3 h-3/2  -translate-1/7 z-0"></div>
         <span className="flex  text-base font-medium opacity-0 group-hover:opacity-100 pointer-events-none group-hover:w-fit transition-[height_width_opacity_blur] blur-xs group-hover:blur-none ease-out-3 duration-300 text-nowrap p-1  group-hover:h-auto w-0 h-0 text-white   overflow-hidden">
           <span>{event.name}</span>
         </span>

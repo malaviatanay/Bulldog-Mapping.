@@ -9,7 +9,7 @@ import { useSidebar } from "@/context/SidebarContext";
 import EventMarker from "./EventMarker";
 import { Tables } from "@/types/supabase";
 
-type Event = Tables<"event">
+type Event = Tables<"event">;
 
 const INTITIAL_CENTER: [number, number] = [-119.74784, 36.81226];
 const INITIAL_ZOOM = 15;
@@ -19,7 +19,7 @@ const DETAIL_ZOOM_THRESHOLD = 18; // Zoom level for simple vs detailed markers
 export default function MapTest() {
   const mapRef = useRef<mapboxgl.Map>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const markersRef = useRef<{ marker: mapboxgl.Marker; root: Root}[]>([]);
+  const markersRef = useRef<{ marker: mapboxgl.Marker; root: Root }[]>([]);
   const {
     buildings,
     events,
@@ -33,11 +33,12 @@ export default function MapTest() {
 
   const [center, setCenter] = useState<[number, number]>(INTITIAL_CENTER);
   const [zoom, setZoom] = useState<number>(INITIAL_ZOOM);
-  const [isSimpleView, setIsSimpleView] = useState<boolean>(INITIAL_ZOOM < DETAIL_ZOOM_THRESHOLD);
+  const [isSimpleView, setIsSimpleView] = useState<boolean>(
+    INITIAL_ZOOM < DETAIL_ZOOM_THRESHOLD
+  );
 
   // Handler for event clicks (called from EventMarker component)
   const handleEventClick = (event: Event) => {
-    console.log("Event clicked:", event);
     setSelectedEvent(event);
     setView("event");
     setIsOpen(true);
@@ -167,7 +168,6 @@ export default function MapTest() {
           const building = buildings.find((b) => b.id === buildingId);
 
           if (building) {
-            console.log(building);
             setSelectedBuilding(building);
             setView("building");
             setIsOpen(true);
@@ -180,22 +180,21 @@ export default function MapTest() {
                 bounds.extend(coord as [number, number]);
               });
             } else if (feature.geometry.type === "MultiPolygon") {
-              feature.geometry.coordinates.forEach(
-                (polygon: number[][][]) => {
-                  polygon[0].forEach((coord: number[]) => {
-                    bounds.extend(coord as [number, number]);
-                  });
-                }
-              );
+              feature.geometry.coordinates.forEach((polygon: number[][][]) => {
+                polygon[0].forEach((coord: number[]) => {
+                  bounds.extend(coord as [number, number]);
+                });
+              });
             }
 
             // Fly to the center of the building with smooth animation
-            mapRef.current.flyTo({
-              center: bounds.getCenter(),
-              zoom: 17,
-              duration: 1000,
-              essential: true,
-            });
+            if (bounds._ne && bounds._sw)
+              mapRef.current.flyTo({
+                center: bounds.getCenter(),
+                zoom: 17,
+                duration: 1000,
+                essential: true,
+              });
           }
         }
       }
@@ -219,7 +218,15 @@ export default function MapTest() {
         // No need to reset cursor - if map is being destroyed, cursor doesn't matter
       }
     };
-  }, [sdbr, buildings, events, setSelectedBuilding, setSelectedEvent, setView, setIsOpen]);
+  }, [
+    sdbr,
+    buildings,
+    events,
+    setSelectedBuilding,
+    setSelectedEvent,
+    setView,
+    setIsOpen,
+  ]);
 
   // Handle flyTo from context
   useEffect(() => {
@@ -250,17 +257,26 @@ export default function MapTest() {
 
     // Add new markers for approved events only
     events
-      .filter((event) => event.isApproved)
+      .filter((event) => {
+        const now = new Date();
+        const eventEnd = event.dateEnd ? new Date(event.dateEnd) : null;
+        let isPast = true;
+        if (eventEnd) {
+          isPast = now > eventEnd;
+        }
+        return event.isApproved && !isPast;
+      })
       .forEach((event) => {
+        console.log(event);
         // Create a div element for the marker
         const el = document.createElement("div");
         el.className = "custom-marker";
-        el.style.pointerEvents = 'auto';
+        el.style.pointerEvents = "auto";
 
         // Create marker
         const marker = new mapboxgl.Marker({
           element: el,
-          anchor: isSimpleView ? 'center' : 'top'
+          anchor: isSimpleView ? "center" : "top",
         })
           .setLngLat([event.longitude, event.latitude])
           .addTo(mapRef.current!);
