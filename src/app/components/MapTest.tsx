@@ -113,7 +113,7 @@ export default function MapTest() {
         source: "buildings",
         paint: {
           "line-color": "#000",
-          "line-width": 2,
+          "line-width": 1,
         },
       });
 

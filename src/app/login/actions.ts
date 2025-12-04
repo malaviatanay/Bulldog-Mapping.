@@ -12,7 +12,9 @@ export async function loginWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: "http://localhost:3000/auth/callback",
+      redirectTo:
+        `${process.env.SITE_URL}/auth/callback` ||
+        "http://localhost:3000/auth/callback",
     },
   });
   if (data.url) {
