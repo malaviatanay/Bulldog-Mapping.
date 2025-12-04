@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Bulldog Mapping",
-  description: "Interactive map for Fresno State University",
+  description: "Interactive map for Fresno State University, discover buildings and events and get involved!",
 };
 
 export default function RootLayout({
