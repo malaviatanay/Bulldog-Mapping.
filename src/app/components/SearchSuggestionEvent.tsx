@@ -1,9 +1,7 @@
-'use client';
+"use client";
 
 import { Calendar } from "lucide-react";
-import Image from "next/image";
 import { Tables } from "@/types/supabase";
-import Tag from "./ui/Tag";
 
 type EventType = Tables<"event">;
 
@@ -16,26 +14,14 @@ export default function SearchSuggestionEvent({
   event,
   onClick,
 }: SearchSuggestionEventProps) {
-  const firstImage = event.image_URLs?.[0];
-
   return (
     <div
       onClick={onClick}
       className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors duration-150 ease-out-2"
     >
-      {/* Image/Icon on left */}
+      {/* Icon on left */}
       <div className="w-12 h-12 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
-        {firstImage ? (
-          <Image
-            src={firstImage}
-            alt={event.name}
-            width={100}
-            height={100}
-            className="w-full h-full object-cover blur-[0.5px]"
-          />
-        ) : (
-          <Calendar className="w-6 h-6 text-gray-400" />
-        )}
+        <Calendar className="w-6 h-6 text-gray-400" />
       </div>
 
       {/* Content */}
