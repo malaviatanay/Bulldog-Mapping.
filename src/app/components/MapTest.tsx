@@ -55,6 +55,7 @@ export default function MapTest() {
 
   useEffect(() => {
     // add your public token here
+    mapContainerRef.current?.setAttribute("data-loading", "true");
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current!,
@@ -131,6 +132,8 @@ export default function MapTest() {
           mapRef.current.getCanvas().style.cursor = "";
         }
       });
+
+      mapContainerRef.current?.setAttribute("data-loading", "false");
     });
 
     return () => {
@@ -309,8 +312,9 @@ export default function MapTest() {
   return (
     <div
       ref={mapContainerRef}
+      data-loading="true"
       id="map-container"
-      className="bg-neutral-200 animate-map-intro absolute w-full h-full top1 left-0 right-0 bottom-0 "
+      className=" animate-map-intro absolute w-full h-full left-0 right-0 bottom-0 "
     ></div>
   );
 }

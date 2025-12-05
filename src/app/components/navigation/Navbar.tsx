@@ -20,7 +20,7 @@ export default function Navbar({ className = "", user, isAdmin}: NavbarProps) {
 
   return (
     <div
-      className={`fixed top-0 left-0 w-full grid items-center justify-items-center z-30 pointer-events-none ${className}`}
+      className={`fixed slide-in-top top-0 left-0 w-full grid items-center justify-items-center z-30 pointer-events-none ${className}`}
     >
       <nav
         className={`w-full h-14  max-w-md  mt-4 rounded-xl px-2  bg-white pointer-events-auto border border-neutral-200 flex items-center relative transition-opacity duration-150 ease-out-2 ${

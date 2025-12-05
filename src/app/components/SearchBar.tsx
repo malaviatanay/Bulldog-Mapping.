@@ -36,26 +36,13 @@ const SearchBar = () => {
     setSelectedEvent,
     flyTo,
   } = useMapContext();
-  const { setIsOpen, isOpen, setView } = useSidebar();
+  const { isOpen, setView } = useSidebar();
 
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [showFilters, setShowFilters] = useState<boolean>(false);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const categories: Category[] = [
-    { name: "Campus Layer", icon: "🗺️", checked: true },
-    { name: "Accessibility", icon: "♿" },
-    { name: "Campus Housing", icon: "🏠" },
-    { name: "Construction", icon: "🚧" },
-    { name: "Emergency", icon: "🚨" },
-    { name: "EV Charging Stations", icon: "🔌" },
-    { name: "Food & Drink", icon: "🍽️" },
-    { name: "Parking", icon: "🅿️" },
-    { name: "Restrooms", icon: "🚻" },
-  ];
 
   // Filter suggestions based on search query
   useEffect(() => {
@@ -185,11 +172,11 @@ const SearchBar = () => {
       </div>
 
       <div
-        className="bg-white rounded-lg border border-neutral-200 overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
+        className="bg-white rounded-lg border w-full border-neutral-200 overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
         ref={searchRef}
       >
-        <div className="flex items-center p-3 gap-2 border-b border-gray-200">
-          <div className="flex-1 flex items-center gap-2 px-3 py-2">
+        <div className="flex items-center justify-between w-full border-gray-200">
+          <div className="flex w-full px-2 items-center">
             <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
             <input
               ref={inputRef}
@@ -197,7 +184,7 @@ const SearchBar = () => {
               placeholder="Search buildings, events..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 outline-none border-none text-sm text-gray-700 placeholder-gray-400 bg-transparent"
+              className="outline-none w-full border-none text-sm text-gray-700 text-ellipsis placeholder-gray-400 p-4 bg-transparent"
             />
             {searchQuery && (
               <button
@@ -211,12 +198,12 @@ const SearchBar = () => {
               </button>
             )}
           </div>
-          <button
+          {/* <button
             onClick={handleSearch}
             className="button-depth bg-highlight text-white px-4 py-2 rounded-lg cursor-pointer text-sm border border-highlight-hover hover:bg-highlight-hover transition-[transform_background-color] duration-150 ease-out-2 hover:scale-105 active:scale-95 flex-shrink-0"
           >
             Search
-          </button>
+          </button> */}
         </div>
 
         {/* Autocomplete Suggestions */}
@@ -246,7 +233,8 @@ const SearchBar = () => {
         {/* No Results Message */}
         {showSuggestions && searchQuery && suggestions.length === 0 && (
           <div className="p-4 text-center text-gray-500 text-sm border-t border-gray-200">
-            No results found for <span className="font-medium">&ldquo;{searchQuery}&rdquo;</span>
+            No results found for{" "}
+            <span className="font-medium">&ldquo;{searchQuery}&rdquo;</span>
           </div>
         )}
 

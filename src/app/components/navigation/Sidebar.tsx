@@ -32,7 +32,7 @@ export default function Sidebar({ user, isAdmin }: SidebarProps) {
         onClick={() => {
           setIsOpen(!isOpen);
         }}
-        className={`hidden button-depth z-50 pointer-events-auto sm:block !absolute hover:scale-105 active:scale-95 transition-[transform_opacity] duration-150 ease-out-2 overflow-clip top-2/4 w-fit h-fit left-full bg-highlight hover:bg-highlight-hover border-1 rounded-tr-md rounded br-md border-highlight-hover ${isDropPinMode ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}
+        className={`hidden slide-in-left button-depth z-50 pointer-events-auto sm:block !absolute hover:scale-105 active:scale-95 transition-[transform_opacity] duration-150 ease-out-2 overflow-clip top-2/4 w-fit h-fit left-full bg-highlight hover:bg-highlight-hover border-1 rounded-tr-md rounded br-md border-highlight-hover ${isDropPinMode ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}
       >
         <span className=" text-white opacity-100 grid items-center w-7 h-10 justify-center grid-cols-1 grid-rows-1 ">
           <ChevronRight

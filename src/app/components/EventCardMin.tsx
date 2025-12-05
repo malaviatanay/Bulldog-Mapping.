@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { Check, Trash } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Check, Clock, Trash } from "lucide-react";
 
-type EventCardMinVariant = 'live' | 'upcoming' | 'past';
+type EventCardMinVariant = "live" | "upcoming" | "past";
 
 type EventCardMinProps = {
   name: string;
@@ -26,14 +26,14 @@ const EventCardMin: React.FC<EventCardMinProps> = ({
   dateStart,
   description,
   onClick,
-  variant = 'upcoming',
+  variant = "upcoming",
   isAdmin = false,
   isApproved = true,
   eventId,
   onApprove,
-  onDelete
+  onDelete,
 }) => {
-  const [timeText, setTimeText] = useState('');
+  const [timeText, setTimeText] = useState("");
 
   const getRelativeTime = (dateString: string) => {
     const now = new Date();
@@ -46,13 +46,16 @@ const EventCardMin: React.FC<EventCardMinProps> = ({
     // Future events (upcoming)
     if (diffMs > 0) {
       if (diffMinutes < 60) {
-        return `in ${diffMinutes} ${diffMinutes === 1 ? 'min' : 'mins'}`;
+        return `in ${diffMinutes} ${diffMinutes === 1 ? "min" : "mins"}`;
       } else if (diffHours < 24) {
-        return `in ${diffHours} ${diffHours === 1 ? 'hr' : 'hrs'}`;
+        return `in ${diffHours} ${diffHours === 1 ? "hr" : "hrs"}`;
       } else if (diffDays < 7) {
-        return `in ${diffDays} ${diffDays === 1 ? 'day' : 'days'}`;
+        return `in ${diffDays} ${diffDays === 1 ? "day" : "days"}`;
       } else {
-        return eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return eventDate.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
       }
     }
 
@@ -62,13 +65,16 @@ const EventCardMin: React.FC<EventCardMinProps> = ({
     const absDiffDays = Math.abs(diffDays);
 
     if (absDiffMinutes < 60) {
-      return `${absDiffMinutes} ${absDiffMinutes === 1 ? 'min' : 'mins'} ago`;
+      return `${absDiffMinutes} ${absDiffMinutes === 1 ? "min" : "mins"} ago`;
     } else if (absDiffHours < 24) {
-      return `${absDiffHours} ${absDiffHours === 1 ? 'hr' : 'hrs'} ago`;
+      return `${absDiffHours} ${absDiffHours === 1 ? "hr" : "hrs"} ago`;
     } else if (absDiffDays < 7) {
-      return `${absDiffDays} ${absDiffDays === 1 ? 'day' : 'days'} ago`;
+      return `${absDiffDays} ${absDiffDays === 1 ? "day" : "days"} ago`;
     } else {
-      return eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return eventDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
     }
   };
 
@@ -87,20 +93,20 @@ const EventCardMin: React.FC<EventCardMinProps> = ({
   // Variant styling configurations
   const variantConfig = {
     live: {
-      tag: { text: 'Live', bgColor: 'bg-red-500' },
-      hoverBorder: 'hover:border-red-400',
-      saturation: 'saturate-100'
+      tag: { text: "Live", bgColor: "bg-red-500" },
+      hoverBorder: "hover:border-red-400",
+      saturation: "saturate-100",
     },
     upcoming: {
-      tag: { text: 'Upcoming', bgColor: 'bg-blue-500' },
-      hoverBorder: 'hover:border-blue-400',
-      saturation: 'saturate-100'
+      tag: { text: "Upcoming", bgColor: "bg-blue-500" },
+      hoverBorder: "hover:border-blue-400",
+      saturation: "saturate-100",
     },
     past: {
-      tag: { text: 'Past', bgColor: 'bg-gray-500' },
-      hoverBorder: 'hover:border-gray-400',
-      saturation: 'saturate-0'
-    }
+      tag: { text: "Past", bgColor: "bg-gray-500" },
+      hoverBorder: "hover:border-gray-400",
+      saturation: "saturate-0",
+    },
   };
 
   const config = variantConfig[variant];
@@ -111,17 +117,25 @@ const EventCardMin: React.FC<EventCardMinProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className={`flex items-start justify-between p-3 bg-white rounded-lg border border-neutral-200 ${config.hoverBorder} ${handleCardClick ? 'hover:scale-[1.02] cursor-pointer' : 'cursor-default'} transition-[transform_border-color_box-shadow] duration-150 ease-out-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:shadow-[0_2px_4px_rgba(0,0,0,0.08)] ${config.saturation}`}
+      className={`flex w-full overflow-clip justify-between p-3 bg-white rounded-lg border border-neutral-200 ${
+        config.hoverBorder
+      } ${
+        handleCardClick ? "hover:scale-[1.02] cursor-pointer" : "cursor-default"
+      } transition-[transform_border-color_box-shadow] duration-150 ease-out-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:shadow-[0_2px_4px_rgba(0,0,0,0.08)] ${
+        config.saturation
+      }`}
     >
-      <div className="flex-1">
+      <div className="w-full flex-shrink">
         <div className="flex items-center mb-1">
-          {variant === 'live' && (
+          {variant === "live" && (
             <span className="inline-block w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></span>
           )}
           <p className="text-sm font-semibold text-gray-800">{name}</p>
         </div>
         {description && (
-          <p className="text-xs text-gray-600 mb-1 line-clamp-1">{description}</p>
+          <p className="text-xs text-gray-600 mb-1 line-clamp-1">
+            {description}
+          </p>
         )}
         {buildingIDs && buildingIDs.length > 0 && (
           <div className="flex items-center text-xs text-gray-500 mb-1">
@@ -130,12 +144,16 @@ const EventCardMin: React.FC<EventCardMinProps> = ({
           </div>
         )}
         <div className="flex items-center text-xs text-gray-500">
-          <span className="mr-1">🕐</span>
+          <span className="mr-1 inline-grid place-content-center">
+            <Clock size={12}></Clock>
+          </span>
           <span>{timeText}</span>
         </div>
       </div>
-      <div className="ml-2 flex flex-col gap-2">
-        <span className={`button-depth text-xs font-medium text-white ${config.tag.bgColor} px-2 py-1 rounded whitespace-nowrap`}>
+      <div className="w-fit flex flex-col justify-between items-end ml-2">
+        <span
+          className={`button-depth text-xs font-medium text-white ${config.tag.bgColor} px-2 py-1 rounded whitespace-nowrap`}
+        >
           {config.tag.text}
         </span>
         {isAdmin && !isApproved && eventId && (

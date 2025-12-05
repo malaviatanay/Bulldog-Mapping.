@@ -131,12 +131,12 @@ export default function EventCard({ className = "" }: EventCardProps) {
     <div className={`event-card ${className} ${config.saturation}`}>
       {/* Heading */}
       <div className="mb-3">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center justify-start gap-2 mb-2">
           {config.showDot && (
-            <span className="inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+            <span className="inline-block aspect-square w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
           )}
           <h2 className="text-xl font-semibold">{selectedEvent.name}</h2>
-          <span className={`button-depth text-xs font-medium text-white ${config.tag.bgColor} px-2 py-1 rounded whitespace-nowrap`}>
+          <span className={`button-depth ml-auto text-xs font-medium text-white ${config.tag.bgColor} px-2 py-1 rounded whitespace-nowrap`}>
             {config.tag.text}
           </span>
         </div>

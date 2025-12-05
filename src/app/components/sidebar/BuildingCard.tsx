@@ -21,7 +21,7 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
     <div key={selectedBuilding.id} className={`building-card ${className} `}>
       {/* Heading */}
       <div className="mb-3">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-start justify-between gap-2 mb-2">
           <h2 className="text-xl font-semibold">{selectedBuilding.name}</h2>
           <Tag variant="building" />
         </div>

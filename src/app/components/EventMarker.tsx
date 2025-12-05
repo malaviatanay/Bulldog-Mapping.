@@ -150,14 +150,14 @@ export default function EventMarker({
         e.stopPropagation();
         onClick();
       }}
-      className={`bg-white w-[200px] border-1 overflow-clip border-neutral-100 button-depth hover:scale-105 active:scale-97 transition-transform ease-out-2 duration-150 rounded-xl shadow-md pointer-events-auto select-all relative z-40 cursor-pointer hover:shadow-xl ${config.saturation}`}
+      className={`bg-white w-[200px] border-1 overflow-clip border-neutral-100 hover:scale-105 active:scale-97 transition-transform ease-out-2 duration-150 rounded-xl shadow-md pointer-events-auto select-all relative z-40 cursor-pointer hover:shadow-xl ${config.saturation}`}
     >
       {/* Header with event name and countdown */}
       <div
         className={`px-3 py-2 rounded-t-lg ${config.bgColor} text-white relative`}
       >
         {config.ping && (
-          <span className="absolute inset-0 rounded-t-lg bg-red-400 opacity-75 animate-ping"></span>
+          <span className="!absolute button-depth inset-0 rounded-t-lg bg-red-500  opacity-75"></span>
         )}
         <div className="font-semibold text-sm truncate relative z-10">
           {event.name || "Event"}
@@ -165,8 +165,8 @@ export default function EventMarker({
         {timeUntil && (
           <div className="text-xs opacity-90 mt-0.5 relative z-10">
             {timeUntil.text === "Started"
-              ? "🔴 Started"
-              : `⏱️ in ${timeUntil.text}`}
+              ? "Ongoing"
+              : `in ${timeUntil.text}`}
           </div>
         )}
       </div>

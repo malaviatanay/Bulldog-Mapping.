@@ -1,8 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-html{
- interpolate-size: allow-keywords; 
+html {
+  interpolate-size: allow-keywords;
 }
 
 @custom-variant dark (&:is(.dark *));
@@ -132,7 +132,6 @@ html{
     transform: translateY(0);
   }
 }
-
 
 /* Button depth effect */
 .button-depth {
@@ -276,4 +275,82 @@ html{
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.slide-in-left {
+  transform-origin: left;
+  animation: slide-in-left 0.5s 0.1s var(--ease-out-3) backwards;
+}
+
+.slide-in-top {
+  transform-origin: top;
+  animation: slide-in-top 0.5s var(--ease-out-3) backwards;
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    
+    transform: translateX(-50%) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes slide-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+#map-container{
+    opacity: 0;
+    transform: scale(1.1);
+    transition: 0.8s var(--ease-out-3);
+
+   &[data-loading="false"]{
+    opacity: 1;
+    transform: scale(1);
+   }
+}
+
+.animate-loader-spin {
+  animation: loader-spin 0.8s linear infinite;
+  will-change: transform;
+}
+
+.animate-loader-in {
+  animation: loader-in 0.5s 0.1s var(--ease-out-3) backwards;
+  will-change: transform;
+}
+
+@keyframes loader-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+
+@keyframes loader-in {
+  0% {
+    transform: scale(0.4);
+    filter: blur(4px);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    filter: blur(0px);
+    opacity: 1;
+  }
+  
 }

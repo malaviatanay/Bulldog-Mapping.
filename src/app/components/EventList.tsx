@@ -6,7 +6,10 @@ import { Plus } from "lucide-react";
 import { useRef, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import Link from "next/link";
-import { approveEventAction, deleteEventAction } from "@/app/actions/eventActions";
+import {
+  approveEventAction,
+  deleteEventAction,
+} from "@/app/actions/eventActions";
 import { useRouter } from "next/navigation";
 
 type Event = Tables<"event">;
@@ -133,7 +136,7 @@ export default function EventList({
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-2 fade-in-heading">
             <span className="inline-block w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
-            <span className="font-semibold text-sm text-yellow-600">
+            <span className="font-semibold pl-1 text-sm text-yellow-600">
               Awaiting Approval
             </span>
           </div>
@@ -184,7 +187,7 @@ export default function EventList({
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-2 fade-in-heading">
             <span className="inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-            <span className="font-semibold text-sm text-red-600">
+            <span className="font-semibold text-sm pl-1 text-red-600">
               Live Events
             </span>
           </div>
@@ -219,7 +222,7 @@ export default function EventList({
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-2 fade-in-heading">
             <span className="inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
-            <span className="font-semibold text-sm text-blue-600">
+            <span className="font-semibold text-sm pl-1 text-blue-600">
               Upcoming Events
             </span>
           </div>
@@ -254,7 +257,7 @@ export default function EventList({
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-2 fade-in-heading">
             <span className="inline-block w-2 h-2 bg-gray-400 rounded-full"></span>
-            <span className="font-semibold text-sm text-gray-600">
+            <span className="font-semibold text-sm pl-1 text-gray-600">
               Past Events
             </span>
           </div>
