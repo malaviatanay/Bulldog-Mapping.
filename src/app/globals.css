@@ -354,3 +354,10 @@ html {
   }
   
 }
+
+@supports (corner-shape: squircle) {
+  .squircle {
+    corner-shape: squircle;
+    border-radius: 40%;
+  }
+}

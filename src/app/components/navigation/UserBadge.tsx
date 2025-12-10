@@ -25,6 +25,7 @@ export default function UserBadge({ userData, isAdmin }: { userData: User | null
               <Image
                 width={32}
                 height={32}
+                quality={50}
                 className="w-full h-full object-cover"
                 alt="User Picture"
                 src={user.user_metadata.picture}
@@ -33,6 +34,7 @@ export default function UserBadge({ userData, isAdmin }: { userData: User | null
               <Image
                 width={32}
                 height={32}
+                quality={50}
                 alt="Doodle of bulldog"
                 className="w-full h-full object-cover"
                 src={"/logo.png"}

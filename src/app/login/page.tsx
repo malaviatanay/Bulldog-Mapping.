@@ -7,8 +7,9 @@ export default function App() {
     <div className="min-h-screen relative overflow-clip bg-neutral-50 flex items-center justify-center p-4">
       <Image
         src={"/fsu.jpg"}
-        width={500}
-        height={500}
+        width={100}
+        height={100}
+        priority={true}
         alt="Fresno State Library at sunset"
         className="absolute top-0 blur-sm z-10 scale-105 left-0 w-full h-full object-cover pointer-events-none"
       ></Image>
@@ -16,13 +17,14 @@ export default function App() {
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-semibold mb-3">Sign In</h1>
           <div className="flex justify-center mb-3">
-            <div className="button-depth relative w-20 h-20 rounded-lg overflow-hidden border border-neutral-300">
+            <div className="button-depth squircle relative w-20 h-20 rounded-lg overflow-hidden border border-neutral-300">
               <Image
                 src="/logo.png"
                 alt="Bulldog Mapping"
-                width={80}
-                height={80}
-                className="object-cover"
+                priority={true}
+                width={50}
+                height={50}
+                className="object-cover w-full h-full"
               />
             </div>
           </div>
@@ -39,6 +41,7 @@ export default function App() {
             <Image
               src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png"
               alt="Google"
+              priority={true}
               width={24}
               height={24}
               className="object-contain"

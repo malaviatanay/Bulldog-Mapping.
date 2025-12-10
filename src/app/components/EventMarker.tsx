@@ -70,7 +70,9 @@ export default function EventMarker({
   const [timeUntil, setTimeUntil] = useState(() =>
     event.dateStart ? getTimeUntilStart(event.dateStart) : null
   );
-  const [variant, setVariant] = useState<'live' | 'upcoming' | 'past'>('upcoming');
+  const [variant, setVariant] = useState<"live" | "upcoming" | "past">(
+    "upcoming"
+  );
 
   useEffect(() => {
     if (!event.dateStart) return;
@@ -82,11 +84,11 @@ export default function EventMarker({
       const endDate = event.dateEnd ? new Date(event.dateEnd) : null;
 
       if (now >= startDate && (!endDate || now <= endDate)) {
-        setVariant('live');
+        setVariant("live");
       } else if (now < startDate) {
-        setVariant('upcoming');
+        setVariant("upcoming");
       } else {
-        setVariant('past');
+        setVariant("past");
       }
     };
 
@@ -104,20 +106,20 @@ export default function EventMarker({
   // Variant styling configurations
   const variantConfig = {
     live: {
-      bgColor: 'bg-red-500',
-      saturation: 'saturate-100',
-      ping: true
+      bgColor: "bg-red-500",
+      saturation: "saturate-100",
+      ping: true,
     },
     upcoming: {
-      bgColor: 'bg-blue-500',
-      saturation: 'saturate-100',
-      ping: false
+      bgColor: "bg-blue-500",
+      saturation: "saturate-100",
+      ping: false,
     },
     past: {
-      bgColor: 'bg-gray-500',
-      saturation: 'saturate-0',
-      ping: false
-    }
+      bgColor: "bg-gray-500",
+      saturation: "saturate-0",
+      ping: false,
+    },
   };
 
   const config = variantConfig[variant];
@@ -164,9 +166,7 @@ export default function EventMarker({
         </div>
         {timeUntil && (
           <div className="text-xs opacity-90 mt-0.5 relative z-10">
-            {timeUntil.text === "Started"
-              ? "Ongoing"
-              : `in ${timeUntil.text}`}
+            {timeUntil.text === "Started" ? "Ongoing" : `in ${timeUntil.text}`}
           </div>
         )}
       </div>
