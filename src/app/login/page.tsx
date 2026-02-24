@@ -22,13 +22,13 @@ export default function App() {
     } catch (err: unknown) {
       // Next.js redirect throws a NEXT_REDIRECT error, which is expected behavior
       // Only show error if it's not a redirect
-      const error = err as { digest?: string };
+      const error = err as { digest?: string; message?: string };
       if (error?.digest?.startsWith("NEXT_REDIRECT")) {
         // This is a successful redirect, don't show error
         return;
       }
       console.error("Auth error:", err);
-      setError(err?.message || "Authentication failed. Please try again.");
+      setError(error?.message || "Authentication failed. Please try again.");
     }
   };
 
