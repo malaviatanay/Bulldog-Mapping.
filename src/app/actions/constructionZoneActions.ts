@@ -55,7 +55,7 @@ export async function createConstructionZone(formData: ConstructionZoneFormData)
     .insert({
       name: formData.name,
       description: formData.description || null,
-      geojson: formData.geojson as any,
+      geojson: formData.geojson as unknown as Record<string, unknown>,
       is_active: formData.isActive,
       is_approved: isAdmin, // Auto-approve if admin, otherwise false
       start_date: formData.startDate || null,
@@ -81,7 +81,7 @@ export async function updateConstructionZone(
   await verifyAdmin();
   const supabase = await createClient();
 
-  const updateData: any = {
+  const updateData: Record<string, unknown> = {
     updated_at: new Date().toISOString(),
   };
 

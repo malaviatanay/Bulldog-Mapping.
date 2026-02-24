@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { ConstructionZone } from "@/types/constructionZone";
 import { Tables } from "@/types/supabase";
+import { Feature, Polygon } from "geojson";
 
 type ConstructionZoneRow = Tables<"construction_zones">;
 
@@ -12,7 +13,7 @@ function rowToConstructionZone(row: ConstructionZoneRow): ConstructionZone {
     id: row.id,
     name: row.name,
     description: row.description,
-    geojson: row.geojson as any,
+    geojson: row.geojson as unknown as Feature<Polygon>,
     isActive: row.is_active,
     isApproved: row.is_approved,
     startDate: row.start_date,

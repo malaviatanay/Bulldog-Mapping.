@@ -343,10 +343,10 @@ export default function MapTest() {
         },
         defaultMode: "simple_select",
       });
-      map.addControl(drawRef.current as any, "top-right");
+      map.addControl(drawRef.current as unknown as mapboxgl.IControl, "top-right");
 
       // Listen for when a polygon is created
-      map.on("draw.create", (e: any) => {
+      map.on("draw.create", (e: { features: GeoJSON.Feature[] }) => {
         const features = e.features;
         if (features && features.length > 0) {
           const feature = features[0];

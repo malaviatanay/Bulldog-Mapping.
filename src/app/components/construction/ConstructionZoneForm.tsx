@@ -30,7 +30,7 @@ export default function ConstructionZoneForm({
   const [formData, setFormData] = useState<ConstructionZoneFormData>({
     name: zone?.name || "",
     description: zone?.description || "",
-    geojson: zone?.geojson || (null as any),
+    geojson: zone?.geojson || (null as unknown as Feature<Polygon>),
     isActive: zone?.isActive ?? true,
     startDate: zone?.startDate
       ? new Date(zone.startDate).toISOString().split("T")[0]

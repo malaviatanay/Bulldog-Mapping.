@@ -19,10 +19,11 @@ export default function App() {
       if (result?.error) {
         setError(result.error);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Next.js redirect throws a NEXT_REDIRECT error, which is expected behavior
       // Only show error if it's not a redirect
-      if (err?.digest?.startsWith("NEXT_REDIRECT")) {
+      const error = err as { digest?: string };
+      if (error?.digest?.startsWith("NEXT_REDIRECT")) {
         // This is a successful redirect, don't show error
         return;
       }
