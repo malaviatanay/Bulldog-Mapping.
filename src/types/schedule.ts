@@ -93,6 +93,7 @@ export interface RouteStop {
   classTime: string;
   className?: string;
   room?: string;
+  isUserLocation?: boolean;
 }
 
 export interface ScheduleRoute {

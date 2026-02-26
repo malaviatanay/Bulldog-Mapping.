@@ -1,6 +1,6 @@
  "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Upload,
   X,
@@ -14,6 +14,7 @@ import {
   Camera,
   BookMarked,
   Download,
+  Navigation,
 } from "lucide-react";
 import { useSidebar } from "@/context/SidebarContext";
 import { useMapContext } from "@/context/MapContext";
@@ -23,7 +24,7 @@ import { matchAllClasses } from "@/utils/schedule/buildingMatcher";
 import { buildCampusGraph } from "@/utils/pathfinding/campusGraph";
 import { planScheduleRoute } from "@/utils/pathfinding/routePlanner";
 import ScheduleResult from "./ScheduleResult";
-import { MatchResult } from "@/types/schedule";
+import { MatchResult, RouteStop, ScheduleRoute, BuildingData } from "@/types/schedule";
 import { SavedRoute, DayOfWeek, DAYS_OF_WEEK, DAY_LABELS } from "@/types/savedRoute";
 import { deleteSavedRoute } from "@/app/actions/savedRouteActions";
 import { User } from "@supabase/supabase-js";
@@ -53,6 +54,27 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
   const [selectedDay, setSelectedDay] = useState<DayOfWeek | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Live location state
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [locationStatus, setLocationStatus] = useState<"pending" | "granted" | "denied">("pending");
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocationStatus("denied");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation([pos.coords.longitude, pos.coords.latitude]);
+        setLocationStatus("granted");
+      },
+      () => {
+        setLocationStatus("denied");
+      },
+      { timeout: 8000, maximumAge: 60000 }
+    );
+  }, []);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setView } = useSidebar();
   const { buildings, buildingPolygons, parkingLots: parkingLotsData, parkingPolygons, constructionZones, setScheduleRoute } = useMapContext();
@@ -71,6 +93,38 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
   // Helper to find parking lot by name
   const findParkingLotByName = (name: string) => {
     return parkingLotsData.find((lot) => lot.name === name) || null;
+  };
+
+  /**
+   * Prepend a "Current Location" stop to the route if live location is available.
+   */
+  const injectUserLocationStop = (route: ScheduleRoute, location: [number, number]): ScheduleRoute => {
+    const locationStop: RouteStop = {
+      order: 0,
+      building: {
+        id: "user-location",
+        name: "Your Location",
+        address: null,
+        daysOpen: null,
+        description: "Your current GPS location",
+        eventIDs: null,
+        floors: 1,
+        hoursOpen: "",
+        image_URLs: [],
+        metaTags: [],
+        otherNames: [],
+        rooms: null,
+        website: null,
+      } as unknown as BuildingData,
+      coordinates: location,
+      classTime: "",
+      className: "Current Location",
+      isUserLocation: true,
+    };
+    return {
+      ...route,
+      stops: [locationStop, ...route.stops.map((s) => ({ ...s, order: s.order + 1 }))],
+    };
   };
 
   /**
@@ -159,7 +213,10 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
           : buildings;
 
       const graph = buildCampusGraph(allBuildings, allPolygons);
-      const routeResult = planScheduleRoute(graph, results, allPolygons, constructionZones);
+      let routeResult = planScheduleRoute(graph, results, allPolygons, constructionZones);
+      if (routeResult && userLocation) {
+        routeResult = injectUserLocationStop(routeResult, userLocation);
+      }
       setScheduleRoute(routeResult, results);
     } else if (validMatches.length === 1) {
       setScheduleRoute(null, results);
@@ -337,7 +394,10 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
       if (validMatches.length > 1) {
         setOcrProgress("Calculating route...");
         const graph = buildCampusGraph(buildings, buildingPolygons);
-        const routeResult = planScheduleRoute(graph, results, buildingPolygons, constructionZones);
+        let routeResult = planScheduleRoute(graph, results, buildingPolygons, constructionZones);
+        if (routeResult && userLocation) {
+          routeResult = injectUserLocationStop(routeResult, userLocation);
+        }
         setScheduleRoute(routeResult, results);
       } else if (validMatches.length === 1) {
         setScheduleRoute(null, results);
@@ -381,6 +441,20 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
           <ArrowLeft className="w-5 h-5 group-hover:text-white transition-colors duration-150 ease-out-2" />
         </button>
         <h2 className="text-xl font-semibold">Plan Your Route</h2>
+      </div>
+
+      {/* Location Status */}
+      <div className={`mb-3 px-3 py-2 rounded-lg flex items-center gap-2 text-xs font-medium ${
+        locationStatus === "granted"
+          ? "bg-blue-50 border border-blue-200 text-blue-700"
+          : locationStatus === "denied"
+            ? "bg-neutral-50 border border-neutral-200 text-neutral-500"
+            : "bg-neutral-50 border border-neutral-200 text-neutral-400"
+      }`}>
+        <Navigation className={`w-3.5 h-3.5 flex-shrink-0 ${locationStatus === "granted" ? "text-blue-500" : "text-neutral-400"}`} />
+        {locationStatus === "granted" && "Using your live location as starting point"}
+        {locationStatus === "denied" && "Location unavailable — route starts from first building"}
+        {locationStatus === "pending" && "Getting your location..."}
       </div>
 
       {/* Mode Toggle */}

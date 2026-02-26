@@ -29,6 +29,7 @@ export default function MapTest() {
   const markersRef = useRef<{ marker: mapboxgl.Marker; root: Root }[]>([]);
   const routeMarkersRef = useRef<{ marker: mapboxgl.Marker; root: Root }[]>([]);
   const drawRef = useRef<MapboxDraw | null>(null);
+  const constructionPopupRef = useRef<mapboxgl.Popup | null>(null);
   const {
     buildings,
     events,
@@ -283,6 +284,8 @@ export default function MapTest() {
               properties: {
                 name: zone.name,
                 description: zone.description,
+                startDate: zone.startDate,
+                endDate: zone.endDate,
               },
             })),
           },
@@ -307,6 +310,67 @@ export default function MapTest() {
             "line-width": 2,
             "line-dasharray": [2, 2],
           },
+        });
+
+        // Helper to build popup HTML from zone properties
+        const buildPopupHTML = (props: Record<string, unknown>) => {
+          const name = (props?.name as string) ?? "Construction Zone";
+          const description = (props?.description as string) ?? null;
+          const startDate = props?.startDate ? new Date(props.startDate as string).toLocaleDateString() : null;
+          const endDate = props?.endDate ? new Date(props.endDate as string).toLocaleDateString() : null;
+          const dateLine = startDate && endDate
+            ? `<p style="margin:4px 0 0;color:#b45309;font-size:11px;">📅 ${startDate} – ${endDate}</p>`
+            : startDate
+              ? `<p style="margin:4px 0 0;color:#b45309;font-size:11px;">📅 Started ${startDate}</p>`
+              : "";
+          return `
+            <div style="font-family:sans-serif;max-width:220px;padding:4px 2px;">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                <span style="font-size:20px;">🚧</span>
+                <strong style="font-size:13px;color:#dc2626;">Construction Zone</strong>
+              </div>
+              <p style="margin:0;font-size:13px;font-weight:600;color:#1f2937;">${name}</p>
+              ${description ? `<p style="margin:4px 0 0;font-size:12px;color:#4b5563;">${description}</p>` : ""}
+              ${dateLine}
+            </div>
+          `;
+        };
+
+        // Track whether the popup was pinned by a click (vs just hover)
+        let isPinned = false;
+
+        // Hover → show popup (desktop)
+        map.on("mouseenter", "construction-zones-fill", (e) => {
+          map.getCanvas().style.cursor = "pointer";
+          if (!e.features || e.features.length === 0 || isPinned) return;
+          const html = buildPopupHTML(e.features[0].properties as Record<string, unknown>);
+          if (constructionPopupRef.current) constructionPopupRef.current.remove();
+          constructionPopupRef.current = new mapboxgl.Popup({ closeButton: false, maxWidth: "260px" })
+            .setLngLat(e.lngLat)
+            .setHTML(html)
+            .addTo(map);
+        });
+
+        // Mouse leave → close hover popup (unless pinned by click)
+        map.on("mouseleave", "construction-zones-fill", () => {
+          map.getCanvas().style.cursor = "";
+          if (!isPinned && constructionPopupRef.current) {
+            constructionPopupRef.current.remove();
+            constructionPopupRef.current = null;
+          }
+        });
+
+        // Click → pin popup open (mobile tap + desktop click to keep open)
+        map.on("click", "construction-zones-fill", (e) => {
+          if (!e.features || e.features.length === 0) return;
+          isPinned = true;
+          const html = buildPopupHTML(e.features[0].properties as Record<string, unknown>);
+          if (constructionPopupRef.current) constructionPopupRef.current.remove();
+          constructionPopupRef.current = new mapboxgl.Popup({ closeButton: true, maxWidth: "260px" })
+            .setLngLat(e.lngLat)
+            .setHTML(html)
+            .addTo(map);
+          constructionPopupRef.current.on("close", () => { isPinned = false; });
         });
       } catch (e) {
         console.error("Error rendering construction zones:", e);
