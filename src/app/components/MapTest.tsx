@@ -14,6 +14,7 @@ import { Tables } from "@/types/supabase";
 import { buildRouteGeoJSON } from "@/utils/pathfinding/routePlanner";
 import { getMultiStopWalkingRoute } from "@/utils/pathfinding/mapboxDirections";
 import { Feature, Polygon } from "geojson";
+import { X } from "lucide-react";
 
 type Event = Tables<"event">;
 
@@ -38,6 +39,7 @@ export default function MapTest() {
     flyToTarget,
     scheduleRoute,
     highlightRouteStop,
+    clearScheduleRoute,
     drawingMode,
     setDrawnPolygon,
     stopDrawing,
@@ -645,11 +647,22 @@ export default function MapTest() {
   }, [events, isSimpleView, setSelectedEvent, setView, setIsOpen]);
 
   return (
-    <div
-      ref={mapContainerRef}
-      data-loading="true"
-      id="map-container"
-      className=" animate-map-intro absolute w-full h-full left-0 right-0 bottom-0 "
-    ></div>
+    <div className="absolute w-full h-full left-0 right-0 bottom-0">
+      <div
+        ref={mapContainerRef}
+        data-loading="true"
+        id="map-container"
+        className="animate-map-intro absolute w-full h-full left-0 right-0 bottom-0"
+      ></div>
+      {scheduleRoute.route && (
+        <button
+          onClick={clearScheduleRoute}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-600 rounded-full shadow-lg hover:bg-red-50 transition-colors text-sm font-medium"
+        >
+          <X className="w-4 h-4" />
+          Clear Route
+        </button>
+      )}
+    </div>
   );
 }
