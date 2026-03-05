@@ -16,9 +16,11 @@ interface ScheduleResultProps {
   user: User | null;
   buildingNames: string[];
   parkingLotName: string | null;
+  classStartTimes?: string[];
+  classEndTimes?: string[];
 }
 
-export default function ScheduleResult({ results, onBack, user, buildingNames, parkingLotName }: ScheduleResultProps) {
+export default function ScheduleResult({ results, onBack, user, buildingNames, parkingLotName, classStartTimes, classEndTimes }: ScheduleResultProps) {
   const { scheduleRoute, toggleRouteVisibility, clearScheduleRoute, flyTo, buildingPolygons } = useMapContext();
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
@@ -48,7 +50,7 @@ export default function ScheduleResult({ results, onBack, user, buildingNames, p
     setIsSaving(true);
     try {
       await Promise.all(
-        selectedDays.map((day) => saveRoute(buildingNames, parkingLotName, day))
+        selectedDays.map((day) => saveRoute(buildingNames, parkingLotName, day, classStartTimes, classEndTimes))
       );
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2000);

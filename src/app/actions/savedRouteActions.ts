@@ -11,6 +11,8 @@ export async function saveRoute(
   buildingNames: string[],
   parkingLotName: string | null,
   dayOfWeek: DayOfWeek,
+  classStartTimes?: string[],
+  classEndTimes?: string[],
   name?: string
 ) {
   const supabase = await createClient();
@@ -28,6 +30,8 @@ export async function saveRoute(
         day_of_week: dayOfWeek,
         building_names: buildingNames,
         parking_lot_name: parkingLotName,
+        class_start_times: classStartTimes ?? null,
+        class_end_times: classEndTimes ?? null,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "user_id,day_of_week" }

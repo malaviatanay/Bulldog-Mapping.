@@ -30,6 +30,8 @@ export async function getSavedRoutes(): Promise<SavedRoute[]> {
     dayOfWeek: row.day_of_week as DayOfWeek,
     buildingNames: row.building_names,
     parkingLotName: row.parking_lot_name,
+    classStartTimes: (row as Record<string, unknown>).class_start_times as string[] | undefined,
+    classEndTimes: (row as Record<string, unknown>).class_end_times as string[] | undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }));

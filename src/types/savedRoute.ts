@@ -26,6 +26,8 @@ export interface SavedRoute {
   dayOfWeek: DayOfWeek;
   buildingNames: string[];
   parkingLotName: string | null;
+  classStartTimes?: string[];
+  classEndTimes?: string[];
   createdAt: string;
   updatedAt: string;
 }
