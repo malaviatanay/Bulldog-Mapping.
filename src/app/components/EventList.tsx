@@ -94,11 +94,12 @@ export default function EventList({
     return now < startDate;
   });
 
+  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const pastEvents = approvedEvents.filter((event: Event) => {
     const endDate = event.dateEnd ? new Date(event.dateEnd) : null;
-    // Past: has end date and current time is past the end date
+    // Past: has end date, current time is past the end date, and within the last 7 days
     if (endDate) {
-      return now > endDate;
+      return now > endDate && endDate >= oneWeekAgo;
     }
     // If no end date, it's either live or upcoming, not past
     return false;
