@@ -11,6 +11,7 @@ import {
   Download,
   Navigation,
   Loader,
+  RefreshCw,
 } from "lucide-react";
 import { useSidebar } from "@/context/SidebarContext";
 import { useMapContext } from "@/context/MapContext";
@@ -81,6 +82,49 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
     return parkingLotsData.find((lot) => lot.name === name) || null;
   };
 
+  const filterRouteFromCurrentTime = (route: ScheduleRoute): ScheduleRoute => {
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const toMinutes = (time?: string): number => {
+      if (!time) return -1;
+      const [h, m] = time.split(":").map(Number);
+      return isNaN(h) || isNaN(m) ? -1 : h * 60 + m;
+    };
+
+    const locationStop = route.stops.find((s) => s.isUserLocation) ?? null;
+    const classStops = route.stops.filter((s) => !s.isUserLocation);
+
+    // Only filter if at least one stop has time data entered
+    const hasAnyTimes = classStops.some(
+      (s) => toMinutes(s.classTime) !== -1 || toMinutes(s.classEndTime) !== -1
+    );
+    if (!hasAnyTimes) return route;
+
+    // A stop is still relevant if:
+    // - it has an end time and the class hasn't ended yet (endTime > now)
+    // - it has only a start time and hasn't started yet (startTime >= now)
+    const isStillRelevant = (stop: RouteStop): boolean => {
+      const endMins = toMinutes(stop.classEndTime);
+      const startMins = toMinutes(stop.classTime);
+      if (endMins !== -1) return endMins > currentMinutes;
+      if (startMins !== -1) return startMins >= currentMinutes;
+      return true; // no times at all — keep
+    };
+
+    const firstActiveIndex = classStops.findIndex(isStillRelevant);
+    const activeClassStops = firstActiveIndex !== -1 ? classStops.slice(firstActiveIndex) : [];
+    const activeSegments = firstActiveIndex !== -1 ? route.segments.slice(firstActiveIndex) : [];
+
+    return {
+      ...route,
+      stops: locationStop ? [locationStop, ...activeClassStops] : activeClassStops,
+      segments: activeSegments,
+      totalDistance: activeSegments.reduce((sum, s) => sum + s.totalDistance, 0),
+      totalWalkTime: activeSegments.reduce((sum, s) => sum + s.totalWalkTime, 0),
+    };
+  };
+
   const injectUserLocationStop = (route: ScheduleRoute, location: [number, number]): ScheduleRoute => {
     const locationStop: RouteStop = {
       order: 0,
@@ -110,10 +154,19 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
     };
   };
 
+  const isTodaysDayOfWeek = (day: DayOfWeek): boolean => {
+    const todayIndex = new Date().getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    const dayMap: Record<number, DayOfWeek> = {
+      1: "monday", 2: "tuesday", 3: "wednesday", 4: "thursday", 5: "friday",
+    };
+    return dayMap[todayIndex] === day;
+  };
+
   const computeRoute = (
     entries: BuildingEntry[],
     useParking: boolean,
-    parkingName: string | null
+    parkingName: string | null,
+    filterByTime = true
   ) => {
     const allNames = useParking && parkingName
       ? [parkingName, ...entries.map((e) => e.building)]
@@ -203,6 +256,7 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
       if (routeResult && userLocation) {
         routeResult = injectUserLocationStop(routeResult, userLocation);
       }
+      if (filterByTime) routeResult = filterRouteFromCurrentTime(routeResult);
       setScheduleRoute(routeResult, results);
     }
   };
@@ -229,7 +283,7 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
     setIsProcessing(true);
     setError(null);
     try {
-      computeRoute(restoredEntries, useParking, parkingName);
+      computeRoute(restoredEntries, useParking, parkingName, isTodaysDayOfWeek(savedRoute.dayOfWeek));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load saved route");
     } finally {
@@ -253,7 +307,15 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
   const handleBack = () => {
     setError(null);
     setMatchResults(null);
+    // Keep building entries so the user can restore the route
+  };
+
+  const handleNewSchedule = () => {
+    setError(null);
+    setMatchResults(null);
     setBuildingEntries([{ building: "", startTime: "", endTime: "" }]);
+    setStartFromParking(false);
+    setSelectedParkingLot("");
   };
 
   const addBuildingEntry = () => {
@@ -320,6 +382,7 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
       <ScheduleResult
         results={matchResults}
         onBack={handleBack}
+        onNewSchedule={handleNewSchedule}
         user={user}
         buildingNames={saveBuildingNames}
         parkingLotName={saveParkingLotName}
@@ -535,6 +598,11 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
               <Loader className="w-4 h-4 animate-spin" />
               Processing...
             </>
+          ) : buildingEntries.some((e) => e.building.trim().length > 0) ? (
+            <>
+              <RefreshCw className="w-4 h-4" />
+              Show Route Again
+            </>
           ) : (
             <>
               <MapPin className="w-4 h-4" />
@@ -542,6 +610,15 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
             </>
           )}
         </button>
+
+        {buildingEntries.some((e) => e.building.trim().length > 0) && (
+          <button
+            onClick={handleNewSchedule}
+            className="mt-2 w-full py-2 border border-neutral-300 text-neutral-600 rounded-lg hover:bg-neutral-50 transition-colors text-sm"
+          >
+            New Schedule
+          </button>
+        )}
       </div>
     </div>
   );

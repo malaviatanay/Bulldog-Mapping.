@@ -91,6 +91,7 @@ export interface RouteStop {
   building: BuildingData;
   coordinates: [number, number];
   classTime: string;
+  classEndTime?: string;
   className?: string;
   room?: string;
   isUserLocation?: boolean;

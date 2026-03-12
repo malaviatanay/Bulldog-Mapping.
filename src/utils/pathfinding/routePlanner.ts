@@ -88,6 +88,7 @@ export function planScheduleRoute(
       building,
       coordinates,
       classTime: mc.parsedClass.startTime,
+      classEndTime: mc.parsedClass.endTime || undefined,
       className:
         mc.parsedClass.courseName ||
         mc.parsedClass.courseCode ||

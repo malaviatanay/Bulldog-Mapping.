@@ -13,6 +13,7 @@ import ClassCard from "./ClassCard";
 interface ScheduleResultProps {
   results: MatchResult[];
   onBack: () => void;
+  onNewSchedule: () => void;
   user: User | null;
   buildingNames: string[];
   parkingLotName: string | null;
@@ -20,7 +21,7 @@ interface ScheduleResultProps {
   classEndTimes?: string[];
 }
 
-export default function ScheduleResult({ results, onBack, user, buildingNames, parkingLotName, classStartTimes, classEndTimes }: ScheduleResultProps) {
+export default function ScheduleResult({ results, onBack, onNewSchedule, user, buildingNames, parkingLotName, classStartTimes, classEndTimes }: ScheduleResultProps) {
   const { scheduleRoute, toggleRouteVisibility, clearScheduleRoute, flyTo, buildingPolygons } = useMapContext();
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
@@ -36,6 +37,10 @@ export default function ScheduleResult({ results, onBack, user, buildingNames, p
 
   const matchedCount = results.filter((r) => r.match !== null).length;
   const unmatchedCount = results.length - matchedCount;
+
+  const remainingStops = route ? route.stops.filter((s) => !s.isUserLocation) : [];
+  const allClassesDone = route !== null && remainingStops.length === 0 &&
+    results.some((r) => r.parsedClass.startTime || r.parsedClass.endTime);
 
   const toggleDay = (day: DayOfWeek) => {
     setSelectedDays((prev) =>
@@ -103,6 +108,14 @@ export default function ScheduleResult({ results, onBack, user, buildingNames, p
           </div>
         )}
       </div>
+
+      {/* All classes done banner */}
+      {allClassesDone && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-center">
+          <p className="text-green-700 font-medium text-sm">You have no more classes today!</p>
+          <p className="text-green-600 text-xs mt-0.5">All your classes for today are done.</p>
+        </div>
+      )}
 
       {/* Route Summary */}
       {route && route.stops.length > 1 && (
@@ -219,10 +232,10 @@ export default function ScheduleResult({ results, onBack, user, buildingNames, p
           Clear Route
         </button>
         <button
-          onClick={onBack}
+          onClick={onNewSchedule}
           className="w-full py-2 border border-neutral-300 text-neutral-600 rounded-lg hover:bg-neutral-50 transition-colors text-sm"
         >
-          Upload New Schedule
+          New Schedule
         </button>
       </div>
     </div>
