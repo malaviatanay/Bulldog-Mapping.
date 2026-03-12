@@ -403,10 +403,6 @@ export default function MapTest() {
     if (!drawRef.current) {
       drawRef.current = new MapboxDraw({
         displayControlsDefault: false,
-        controls: {
-          polygon: true,
-          trash: true,
-        },
         defaultMode: "simple_select",
       });
       map.addControl(drawRef.current as unknown as mapboxgl.IControl, "top-right");
