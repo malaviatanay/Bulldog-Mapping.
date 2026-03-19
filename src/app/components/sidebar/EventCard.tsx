@@ -1,6 +1,7 @@
 'use client'
-import { Calendar } from "lucide-react";
+import { Calendar, ArrowLeft } from "lucide-react";
 import { useMapContext } from "@/context/MapContext";
+import { useSidebar } from "@/context/SidebarContext";
 import { useState, useEffect } from "react";
 
 type EventCardProps = {
@@ -9,6 +10,7 @@ type EventCardProps = {
 
 export default function EventCard({ className = "" }: EventCardProps) {
   const { selectedEvent } = useMapContext();
+  const { setView } = useSidebar();
   const [startTimeText, setStartTimeText] = useState('');
   const [endTimeText, setEndTimeText] = useState('');
   const [variant, setVariant] = useState<'live' | 'upcoming' | 'past'>('upcoming');
@@ -129,6 +131,15 @@ export default function EventCard({ className = "" }: EventCardProps) {
 
   return (
     <div className={`event-card ${className} ${config.saturation}`}>
+      {/* Back Button */}
+      <button
+        onClick={() => setView("eventList")}
+        className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 transition-colors duration-150 cursor-pointer mb-3"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Events
+      </button>
+
       {/* Heading */}
       <div className="mb-3">
         <div className="flex items-center justify-start gap-2 mb-2">

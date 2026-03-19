@@ -52,12 +52,12 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
   const supabase = await createClient();
 
+  const firstName = formData.get("firstName") as string;
+  const lastName = formData.get("lastName") as string;
   const data = {
     email: formData.get("email") as string,
     password: formData.get("password") as string,
   };
-
-  console.log("Attempting signup for:", data.email);
 
   const { data: signupData, error } = await supabase.auth.signUp({
     ...data,
@@ -65,6 +65,11 @@ export async function signup(formData: FormData) {
       emailRedirectTo: process.env.SITE_URL
         ? `${process.env.SITE_URL}/auth/callback`
         : "http://localhost:3000/auth/callback",
+      data: {
+        name: `${firstName} ${lastName}`,
+        first_name: firstName,
+        last_name: lastName,
+      },
     },
   });
 
