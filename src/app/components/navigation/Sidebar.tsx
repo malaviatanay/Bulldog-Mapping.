@@ -11,6 +11,7 @@ import EventList from "../EventList";
 import ScheduleUpload from "../schedule/ScheduleUpload";
 import ConstructionZoneManager from "../construction/ConstructionZoneManager";
 import ChatBot from "../chat/ChatBot";
+import Settings from "../settings/Settings";
 import { User } from "@supabase/supabase-js";
 import { SavedRoute } from "@/types/savedRoute";
 import Image from "next/image";
@@ -58,7 +59,7 @@ export default function Sidebar({ user, isAdmin, savedRoutes }: SidebarProps) {
         } overflow-clip w-[calc(100%-2rem)] sm:w-sm h-[calc(100%-1rem)] sm:h-full border border-neutral-200 z-20 relative`}
       >
         {/* Background Logo - hidden on eventCreator, eventList, and schedule views */}
-        {view !== "eventCreator" && view !== "eventList" && view !== "schedule" && view !== "chatbot" && (
+        {view !== "eventCreator" && view !== "eventList" && view !== "schedule" && view !== "chatbot" && view !== "settings" && (
           <div className="absolute select-none pointer-events-none inset-0 flex items-center justify-center z-0 mix-blend-hard-light opacity-5">
             <Image
               src="/logo.png"
@@ -80,6 +81,7 @@ export default function Sidebar({ user, isAdmin, savedRoutes }: SidebarProps) {
           {view === "schedule" && <ScheduleUpload savedRoutes={savedRoutes} user={user} />}
           {view === "constructionZones" && <ConstructionZoneManager isAdmin={isAdmin} />}
           {view === "chatbot" && <ChatBot />}
+          {view === "settings" && <Settings user={user} />}
         </div>
       </menu>
     </aside>
