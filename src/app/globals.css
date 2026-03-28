@@ -244,38 +244,53 @@ html {
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #1a2536;
+  --foreground: #e2e8f0;
+  --card: #1f304a;
+  --card-foreground: #e2e8f0;
+  --popover: #1f304a;
+  --popover-foreground: #e2e8f0;
+  --primary: #e2e8f0;
+  --primary-foreground: #1a2536;
+  --secondary: #253a5e;
+  --secondary-foreground: #e2e8f0;
+  --muted: #253a5e;
+  --muted-foreground: #8fa3c0;
+  --accent: #253a5e;
+  --accent-foreground: #e2e8f0;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #4a7aaa;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #1f304a;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-primary: #4a8fd4;
+  --sidebar-primary-foreground: #e2e8f0;
+  --sidebar-accent: #253a5e;
+  --sidebar-accent-foreground: #e2e8f0;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #4a7aaa;
 }
+
+/* Google Maps-style dark mode — remap Tailwind gray utilities to navy */
+.dark .bg-gray-900, .dark .dark\:bg-gray-900 { background-color: #1a2536; }
+.dark .bg-gray-800, .dark .dark\:bg-gray-800 { background-color: #1f304a; }
+.dark .bg-gray-700, .dark .dark\:bg-gray-700 { background-color: #253a5e; }
+.dark .bg-gray-100, .dark .dark\:bg-gray-100 { background-color: #1f304a; }
+.dark .border-gray-700, .dark .dark\:border-gray-700 { border-color: rgba(255, 255, 255, 0.1); }
+.dark .border-gray-600, .dark .dark\:border-gray-600 { border-color: rgba(255, 255, 255, 0.12); }
+.dark .text-gray-100, .dark .dark\:text-gray-100 { color: #e2e8f0; }
+.dark .text-gray-300, .dark .dark\:text-gray-300 { color: #a8c0d8; }
+.dark .text-gray-400, .dark .dark\:text-gray-400 { color: #8fa3c0; }
+.dark .text-gray-500, .dark .dark\:text-gray-500 { color: #7a95b0; }
+.dark .hover\:bg-gray-700:hover { background-color: #253a5e; }
+.dark .hover\:text-gray-300:hover { color: #a8c0d8; }
+.dark .group-hover\:border-gray-500:hover { border-color: rgba(255, 255, 255, 0.2); }
 
 @layer base {
   * {
