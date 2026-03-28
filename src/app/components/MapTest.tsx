@@ -32,17 +32,12 @@ function applyDarkMapPalette(map: mapboxgl.Map) {
       } else if (layer.type === "fill") {
         if (/water/.test(id)) {
           map.setPaintProperty(id, "fill-color", "#144043");
-        } else if (/building/.test(id) && !/outline/.test(id)) {
-          map.setPaintProperty(id, "fill-color", "#1f5054");
-          map.setPaintProperty(id, "fill-opacity", 0.9);
         } else if (/^(land|national-park|landuse|aeroway|pitch|grass|scrub|sand)/.test(id)) {
           map.setPaintProperty(id, "fill-color", "#1a2632");
         }
       } else if (layer.type === "line") {
         if (/water/.test(id)) {
           map.setPaintProperty(id, "line-color", "#144043");
-        } else if (/building/.test(id)) {
-          map.setPaintProperty(id, "line-color", "#1a2632");
         }
       }
     } catch { /* some layers don't support all paint properties */ }
