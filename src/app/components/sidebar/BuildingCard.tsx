@@ -1,7 +1,8 @@
 "use client";
-import { Building } from "lucide-react";
+import { Building, ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import { useMapContext } from "@/context/MapContext";
+import { useSidebar } from "@/context/SidebarContext";
 import Tag from "../ui/Tag";
 
 type BuildingCardProps = {
@@ -10,6 +11,7 @@ type BuildingCardProps = {
 
 export default function BuildingCard({ className = "" }: BuildingCardProps) {
   const { selectedBuilding } = useMapContext();
+  const { setIsOpen } = useSidebar();
 
   if (!selectedBuilding) {
     return null;
@@ -19,6 +21,15 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
 
   return (
     <div key={selectedBuilding.id} className={`building-card ${className} `}>
+      {/* Back to Map */}
+      <button
+        onClick={() => setIsOpen(false)}
+        className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-150 cursor-pointer mb-3"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Map
+      </button>
+
       {/* Heading */}
       <div className="mb-3">
         <div className="flex items-start justify-between gap-2 mb-2">

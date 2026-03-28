@@ -2,7 +2,7 @@
 
 import { useSidebar } from "@/context/SidebarContext";
 import { useMapContext } from "@/context/MapContext";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import BuildingCard from "../sidebar/BuildingCard";
 import EventCard from "../sidebar/EventCard";
 import SearchBar from "../SearchBar";
@@ -70,6 +70,15 @@ export default function Sidebar({ user, isAdmin, savedRoutes }: SidebarProps) {
             />
           </div>
         )}
+
+        {/* Mobile close button */}
+        <button
+          onClick={() => setIsOpen(false)}
+          className="sm:hidden absolute top-3 right-3 z-20 p-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150 cursor-pointer"
+          aria-label="Close"
+        >
+          <X className="w-4 h-4" />
+        </button>
 
         {/* Content */}
         <div className="relative z-10 h-full">
