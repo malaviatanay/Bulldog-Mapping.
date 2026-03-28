@@ -22,7 +22,7 @@ type Event = Tables<"event">;
 const INTITIAL_CENTER: [number, number] = [-119.74784, 36.81226];
 const INITIAL_ZOOM = 15;
 const LIGHT_STYLE = "mapbox://styles/mapbox/standard";
-const DARK_STYLE = "mapbox://styles/mapbox/navigation-night-v1";
+const DARK_STYLE = "mapbox://styles/mapbox/dark-v11";
 const DETAIL_ZOOM_THRESHOLD = 18; // Zoom level for simple vs detailed markers
 
 // map will take building and polygon data and event data as props =)
