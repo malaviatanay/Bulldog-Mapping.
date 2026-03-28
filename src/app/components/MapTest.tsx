@@ -227,11 +227,6 @@ export default function MapTest() {
   useEffect(() => {
     if (!mapRef.current || !mapReady) return;
 
-    // Handler for dropping pins
-    const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
-      sdbr.setLastClickedCords([e.lngLat.lat, e.lngLat.lng]);
-    };
-
     const queryAndOpenBuilding = (point: mapboxgl.Point) => {
       if (!mapRef.current) return;
       const hitbox = 20;
@@ -267,16 +262,16 @@ export default function MapTest() {
         mapRef.current.flyTo({ center: bounds.getCenter(), zoom: 17, duration: 1000, essential: true });
     };
 
-    // Desktop click handler
+    // Unified click handler (desktop + Mapbox synthetic click from touch)
     const handleMapClickWithBuilding = (e: mapboxgl.MapMouseEvent) => {
       if (sdbr.mapPointerEvents === "dropPin") {
-        handleMapClick(e);
+        sdbr.setLastClickedCords([e.lngLat.lat, e.lngLat.lng]);
         return;
       }
       queryAndOpenBuilding(e.point);
     };
 
-    // Mobile tap detection via touchstart/touchend
+    // Mobile tap detection — always registered so taps work in all modes
     let touchStartX = 0;
     let touchStartY = 0;
     const handleTouchStart = (e: mapboxgl.MapTouchEvent) => {
@@ -284,32 +279,28 @@ export default function MapTest() {
       touchStartY = e.point.y;
     };
     const handleTouchEnd = (e: mapboxgl.MapTouchEvent) => {
-      if (sdbr.mapPointerEvents === "dropPin") return;
       const dx = e.point.x - touchStartX;
       const dy = e.point.y - touchStartY;
       const moved = Math.sqrt(dx * dx + dy * dy);
-      if (moved < 10) {
-        // Treat as a tap
+      if (moved >= 10) return; // pan, not a tap
+      if (sdbr.mapPointerEvents === "dropPin") {
+        sdbr.setLastClickedCords([e.lngLat.lat, e.lngLat.lng]);
+      } else {
         queryAndOpenBuilding(e.point);
       }
     };
 
-    // Add appropriate listeners based on mode
-    if (sdbr.mapPointerEvents === "dropPin") {
-      mapRef.current.on("click", handleMapClick);
-      mapRef.current.getCanvas().style.cursor = "crosshair";
-    } else {
-      mapRef.current.on("click", handleMapClickWithBuilding);
-      mapRef.current.on("touchstart", handleTouchStart);
-      mapRef.current.on("touchend", handleTouchEnd);
-    }
+    mapRef.current.on("click", handleMapClickWithBuilding);
+    mapRef.current.on("touchstart", handleTouchStart);
+    mapRef.current.on("touchend", handleTouchEnd);
+    mapRef.current.getCanvas().style.cursor = sdbr.mapPointerEvents === "dropPin" ? "crosshair" : "";
 
     return () => {
       if (mapRef.current) {
-        mapRef.current.off("click", handleMapClick);
         mapRef.current.off("click", handleMapClickWithBuilding);
         mapRef.current.off("touchstart", handleTouchStart);
         mapRef.current.off("touchend", handleTouchEnd);
+        mapRef.current.getCanvas().style.cursor = "";
       }
     };
   }, [
