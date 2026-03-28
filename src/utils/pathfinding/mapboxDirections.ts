@@ -63,30 +63,22 @@ export async function getMultiStopWalkingRoute(
     return null;
   }
 
-  const accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-
-  if (!accessToken) {
-    console.warn("Mapbox token not found");
-    return null;
-  }
-
   try {
     // Build coordinates string: lng1,lat1;lng2,lat2;...
     const coordsString = waypoints.map((wp) => `${wp[0]},${wp[1]}`).join(";");
 
-    const url = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordsString}?geometries=geojson&access_token=${accessToken}`;
-
-    const response = await fetch(url);
+    // Route through server-side API to avoid token scope/URL restrictions
+    const response = await fetch(`/api/directions?coordinates=${coordsString}`);
 
     if (!response.ok) {
-      console.warn(`Mapbox Directions API error: ${response.status}`);
+      console.warn(`Directions API error: ${response.status}`);
       return null;
     }
 
     const data = await response.json();
 
     if (!data.routes || data.routes.length === 0) {
-      console.warn("No routes found from Mapbox");
+      console.warn("No walking route found:", data.code ?? "unknown");
       return null;
     }
 
@@ -98,7 +90,7 @@ export async function getMultiStopWalkingRoute(
       duration: route.duration,
     };
   } catch (error) {
-    console.error("Error fetching multi-stop directions:", error);
+    console.error("Error fetching walking directions:", error);
     return null;
   }
 }
