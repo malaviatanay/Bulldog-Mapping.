@@ -18,6 +18,7 @@ import Navbar from "./components/navigation/Navbar";
 import { createClient } from "@/utils/supabase/server";
 import Image from "next/image";
 import { Loader, LoaderCircle } from "lucide-react";
+import ThemeWrapper from "./components/ThemeWrapper";
 
 export default async function Home() {
   const adminStatus = await getUserAdminStatus();
@@ -55,6 +56,7 @@ export default async function Home() {
     savedRoutesData,
   ]);
   return (
+    <ThemeWrapper>
     <div className="max-h-dvh h-dvh relative w-full">
       <MapProvider
         buildings={buildings}
@@ -77,5 +79,6 @@ export default async function Home() {
         {/* <Map></Map> */}
       </MapProvider>
     </div>
+    </ThemeWrapper>
   );
 }

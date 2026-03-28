@@ -15,11 +15,14 @@ import { buildRouteGeoJSON } from "@/utils/pathfinding/routePlanner";
 import { getMultiStopWalkingRoute } from "@/utils/pathfinding/mapboxDirections";
 import { Feature, Polygon } from "geojson";
 import { X } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
 
 type Event = Tables<"event">;
 
 const INTITIAL_CENTER: [number, number] = [-119.74784, 36.81226];
 const INITIAL_ZOOM = 15;
+const LIGHT_STYLE = "mapbox://styles/mapbox/standard";
+const DARK_STYLE = "mapbox://styles/mapbox/dark-v11";
 const DETAIL_ZOOM_THRESHOLD = 18; // Zoom level for simple vs detailed markers
 
 // map will take building and polygon data and event data as props =)
@@ -47,6 +50,7 @@ export default function MapTest() {
     ...sdbr
   } = useMapContext();
   const { setView, setIsOpen } = useSidebar();
+  const { resolvedTheme: theme } = useTheme();
 
   const [center, setCenter] = useState<[number, number]>(INTITIAL_CENTER);
   const [zoom, setZoom] = useState<number>(INITIAL_ZOOM);
@@ -78,6 +82,7 @@ export default function MapTest() {
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current!,
+      style: theme === "dark" ? DARK_STYLE : LIGHT_STYLE,
       center: INTITIAL_CENTER,
       zoom: INITIAL_ZOOM,
     });
@@ -121,8 +126,8 @@ export default function MapTest() {
         type: "fill",
         source: "buildings",
         paint: {
-          "fill-color": "#088",
-          "fill-opacity": 0.5,
+          "fill-color": theme === "dark" ? "#1a2d4a" : "#088",
+          "fill-opacity": theme === "dark" ? 0.6 : 0.5,
         },
       });
 
@@ -132,8 +137,8 @@ export default function MapTest() {
         type: "line",
         source: "buildings",
         paint: {
-          "line-color": "#000",
-          "line-width": 1,
+          "line-color": theme === "dark" ? "#2a4a6e" : "#000",
+          "line-width": theme === "dark" ? 1.5 : 1,
         },
       });
 
@@ -161,6 +166,63 @@ export default function MapTest() {
     };
   }, [buildingPolygons]);
 
+  // Switch map style when theme changes
+  useEffect(() => {
+    if (!mapRef.current || !mapReady) return;
+    const map = mapRef.current;
+    const newStyle = theme === "dark" ? DARK_STYLE : LIGHT_STYLE;
+
+    map.once("style.load", () => {
+      // Re-add building polygons after style swap
+      if (!map.getSource("buildings")) {
+        map.addSource("buildings", {
+          type: "geojson",
+          data: {
+            type: "FeatureCollection",
+            features: buildingPolygons.map((polygon) => {
+              const feature = polygon.geojson as unknown as GeoJSON.Feature;
+              return {
+                type: "Feature",
+                id: polygon.building_id,
+                geometry: feature.geometry,
+                properties: {
+                  ...(feature.properties || {}),
+                  buildingId: polygon.building_id,
+                },
+              };
+            }),
+          },
+        });
+      }
+
+      if (!map.getLayer("buildings-fill")) {
+        map.addLayer({
+          id: "buildings-fill",
+          type: "fill",
+          source: "buildings",
+          paint: {
+            "fill-color": theme === "dark" ? "#1a2d4a" : "#088",
+            "fill-opacity": theme === "dark" ? 0.6 : 0.5,
+          },
+        });
+      }
+
+      if (!map.getLayer("buildings-outline")) {
+        map.addLayer({
+          id: "buildings-outline",
+          type: "line",
+          source: "buildings",
+          paint: {
+            "line-color": theme === "dark" ? "#2a4a6e" : "#000",
+            "line-width": theme === "dark" ? 1.5 : 1,
+          },
+        });
+      }
+    });
+
+    map.setStyle(newStyle);
+  }, [theme, mapReady, buildingPolygons]);
+
   // Handle click events based on mapPointerEvents mode
   useEffect(() => {
     if (!mapRef.current || !mapReady) return;
@@ -170,43 +232,65 @@ export default function MapTest() {
       sdbr.setLastClickedCords([e.lngLat.lat, e.lngLat.lng]);
     };
 
-    // Handler for building clicks
-    const handleBuildingClick = (e: mapboxgl.MapLayerMouseEvent) => {
-      if (e.features && e.features.length > 0) {
-        const feature = e.features[0];
-        const buildingId = feature.properties?.buildingId;
+    const queryAndOpenBuilding = (point: mapboxgl.Point) => {
+      if (!mapRef.current) return;
+      const hitbox = 20;
+      const features = mapRef.current.queryRenderedFeatures(
+        [
+          [point.x - hitbox, point.y - hitbox],
+          [point.x + hitbox, point.y + hitbox],
+        ],
+        { layers: ["buildings-fill"] }
+      );
+      if (features.length === 0) return;
+      const feature = features[0];
+      const buildingId = feature.properties?.buildingId;
+      if (!buildingId) return;
+      const building = buildings.find((b) => b.id === buildingId);
+      if (!building) return;
 
-        if (buildingId && mapRef.current) {
-          const building = buildings.find((b) => b.id === buildingId);
+      setSelectedBuilding(building);
+      setView("building");
+      setIsOpen(true);
 
-          if (building) {
-            setSelectedBuilding(building);
-            setView("building");
-            setIsOpen(true);
+      const bounds = new mapboxgl.LngLatBounds();
+      if (feature.geometry.type === "Polygon") {
+        (feature.geometry.coordinates[0] as number[][]).forEach((coord) =>
+          bounds.extend(coord as [number, number])
+        );
+      } else if (feature.geometry.type === "MultiPolygon") {
+        (feature.geometry.coordinates as number[][][][]).forEach((polygon) =>
+          polygon[0].forEach((coord) => bounds.extend(coord as [number, number]))
+        );
+      }
+      if (bounds._ne && bounds._sw)
+        mapRef.current.flyTo({ center: bounds.getCenter(), zoom: 17, duration: 1000, essential: true });
+    };
 
-            const bounds = new mapboxgl.LngLatBounds();
+    // Desktop click handler
+    const handleMapClickWithBuilding = (e: mapboxgl.MapMouseEvent) => {
+      if (sdbr.mapPointerEvents === "dropPin") {
+        handleMapClick(e);
+        return;
+      }
+      queryAndOpenBuilding(e.point);
+    };
 
-            if (feature.geometry.type === "Polygon") {
-              feature.geometry.coordinates[0].forEach((coord: number[]) => {
-                bounds.extend(coord as [number, number]);
-              });
-            } else if (feature.geometry.type === "MultiPolygon") {
-              feature.geometry.coordinates.forEach((polygon: number[][][]) => {
-                polygon[0].forEach((coord: number[]) => {
-                  bounds.extend(coord as [number, number]);
-                });
-              });
-            }
-
-            if (bounds._ne && bounds._sw)
-              mapRef.current.flyTo({
-                center: bounds.getCenter(),
-                zoom: 17,
-                duration: 1000,
-                essential: true,
-              });
-          }
-        }
+    // Mobile tap detection via touchstart/touchend
+    let touchStartX = 0;
+    let touchStartY = 0;
+    const handleTouchStart = (e: mapboxgl.MapTouchEvent) => {
+      touchStartX = e.point.x;
+      touchStartY = e.point.y;
+    };
+    const handleTouchEnd = (e: mapboxgl.MapTouchEvent) => {
+      if (sdbr.mapPointerEvents === "dropPin") return;
+      const dx = e.point.x - touchStartX;
+      const dy = e.point.y - touchStartY;
+      const moved = Math.sqrt(dx * dx + dy * dy);
+      if (moved < 10) {
+        // Treat as a tap
+        queryAndOpenBuilding(e.point);
       }
     };
 
@@ -215,13 +299,17 @@ export default function MapTest() {
       mapRef.current.on("click", handleMapClick);
       mapRef.current.getCanvas().style.cursor = "crosshair";
     } else {
-      mapRef.current.on("click", "buildings-fill", handleBuildingClick);
+      mapRef.current.on("click", handleMapClickWithBuilding);
+      mapRef.current.on("touchstart", handleTouchStart);
+      mapRef.current.on("touchend", handleTouchEnd);
     }
 
     return () => {
       if (mapRef.current) {
         mapRef.current.off("click", handleMapClick);
-        mapRef.current.off("click", "buildings-fill", handleBuildingClick);
+        mapRef.current.off("click", handleMapClickWithBuilding);
+        mapRef.current.off("touchstart", handleTouchStart);
+        mapRef.current.off("touchend", handleTouchEnd);
       }
     };
   }, [

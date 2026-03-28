@@ -184,6 +184,7 @@ const SearchBar = () => {
               placeholder="Search buildings, events..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              suppressHydrationWarning
               className="outline-none w-full border-none text-sm text-gray-700 text-ellipsis placeholder-gray-400 p-4 bg-transparent"
             />
             {searchQuery && (

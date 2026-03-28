@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { UserRound, Shield, SlidersHorizontal, Camera, Check, Loader2 } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
 
 type SettingsTab = "about" | "security" | "preferences";
 
@@ -24,18 +25,18 @@ export default function Settings({ user }: SettingsProps) {
 
   return (
     <div className="h-full flex flex-col">
-      <h2 className="text-xl font-semibold mb-4">Settings</h2>
+      <h2 className="text-xl font-semibold mb-4 dark:text-gray-100">Settings</h2>
 
       {/* Tab Navigation */}
-      <div className="flex gap-1 mb-4 bg-gray-100 rounded-lg p-1">
+      <div className="flex gap-1 mb-4 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs font-medium transition-colors duration-150 cursor-pointer ${
               activeTab === tab.id
-                ? "bg-white shadow-sm text-gray-900"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
             {tab.icon}
@@ -420,14 +421,138 @@ function SecuritySection({ user }: { user: User | null }) {
   );
 }
 
-function PreferencesSection() {
+function ThemePreviewCard({
+  mode,
+  label,
+  selected,
+  onClick,
+}: {
+  mode: "light" | "dark" | "auto";
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  // Auto shows a split preview (left light, right dark)
+  const isAuto = mode === "auto";
+  const isDark = mode === "dark";
+
   return (
-    <div className="text-center py-8">
-      <SlidersHorizontal className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-      <p className="text-sm text-gray-500 font-medium">Preferences</p>
-      <p className="text-xs text-gray-400 mt-1">
-        Coming soon! Customization options will appear here.
+    <button onClick={onClick} className="flex flex-col items-center gap-1.5 cursor-pointer group">
+      <div
+        className={`w-[90px] h-[62px] rounded-lg overflow-hidden border-2 transition-all duration-150 ${
+          selected
+            ? "border-blue-500 shadow-[0_0_0_1px_rgba(59,130,246,0.5)]"
+            : "border-gray-300 dark:border-gray-600 group-hover:border-gray-400 dark:group-hover:border-gray-500"
+        }`}
+      >
+        {isAuto ? (
+          <div className="w-full h-full flex">
+            {/* Left half: dark */}
+            <div className="w-1/2 h-full bg-[#1e2a3a] flex flex-col p-1.5 gap-1">
+              <div className="flex gap-[3px]">
+                <div className="w-[5px] h-[5px] rounded-full bg-red-400" />
+                <div className="w-[5px] h-[5px] rounded-full bg-yellow-400" />
+                <div className="w-[5px] h-[5px] rounded-full bg-green-400" />
+              </div>
+              <div className="flex-1 flex flex-col gap-0.5 mt-0.5">
+                <div className="h-[5px] w-full rounded-sm bg-blue-500/70" />
+                <div className="h-[5px] w-[80%] rounded-sm bg-blue-400/50" />
+                <div className="h-[5px] w-[60%] rounded-sm bg-gray-500/40" />
+              </div>
+            </div>
+            {/* Right half: light */}
+            <div className="w-1/2 h-full bg-[#e8ecf0] flex flex-col p-1.5 gap-1">
+              <div className="flex gap-[3px]">
+                <div className="w-[5px] h-[5px] rounded-full bg-red-400" />
+                <div className="w-[5px] h-[5px] rounded-full bg-yellow-400" />
+                <div className="w-[5px] h-[5px] rounded-full bg-green-400" />
+              </div>
+              <div className="flex-1 flex flex-col gap-0.5 mt-0.5">
+                <div className="h-[5px] w-full rounded-sm bg-blue-500/60" />
+                <div className="h-[5px] w-[80%] rounded-sm bg-blue-400/40" />
+                <div className="h-[5px] w-[60%] rounded-sm bg-gray-400/40" />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div
+            className={`w-full h-full flex flex-col p-2 gap-1 ${
+              isDark ? "bg-[#1e2a3a]" : "bg-[#e8ecf0]"
+            }`}
+          >
+            <div className="flex gap-[3px]">
+              <div className="w-[5px] h-[5px] rounded-full bg-red-400" />
+              <div className="w-[5px] h-[5px] rounded-full bg-yellow-400" />
+              <div className="w-[5px] h-[5px] rounded-full bg-green-400" />
+            </div>
+            <div className="flex-1 flex flex-col gap-0.5 mt-0.5">
+              <div
+                className={`h-[5px] w-full rounded-sm ${
+                  isDark ? "bg-blue-500/70" : "bg-blue-500/60"
+                }`}
+              />
+              <div
+                className={`h-[5px] w-[80%] rounded-sm ${
+                  isDark ? "bg-blue-400/50" : "bg-blue-400/40"
+                }`}
+              />
+              <div
+                className={`h-[5px] w-[60%] rounded-sm ${
+                  isDark ? "bg-gray-500/40" : "bg-gray-400/40"
+                }`}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+      <span
+        className={`text-xs font-medium transition-colors ${
+          selected
+            ? "text-blue-600 dark:text-blue-400"
+            : "text-gray-600 dark:text-gray-400"
+        }`}
+      >
+        {label}
+      </span>
+    </button>
+  );
+}
+
+function PreferencesSection() {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-gray-600 dark:text-gray-400">
+        Customize your experience.
       </p>
+
+      {/* Theme Toggle */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+          Appearance
+        </label>
+        <div className="flex justify-center gap-4">
+          <ThemePreviewCard
+            mode="auto"
+            label="Auto"
+            selected={theme === "auto"}
+            onClick={() => setTheme("auto")}
+          />
+          <ThemePreviewCard
+            mode="light"
+            label="Light"
+            selected={theme === "light"}
+            onClick={() => setTheme("light")}
+          />
+          <ThemePreviewCard
+            mode="dark"
+            label="Dark"
+            selected={theme === "dark"}
+            onClick={() => setTheme("dark")}
+          />
+        </div>
+      </div>
     </div>
   );
 }

@@ -54,9 +54,9 @@ export default function Sidebar({ user, isAdmin, savedRoutes }: SidebarProps) {
         </span>
       </button>
       <menu
-        className={`bg-white p-4 rounded-2xl overflow-y-auto sm:rounded-xl ${
+        className={`bg-white dark:bg-gray-900 dark:text-gray-100 p-4 rounded-2xl overflow-y-auto sm:rounded-xl ${
           isOpen ? "w-full" : "pointer-events-none"
-        } overflow-clip w-[calc(100%-2rem)] sm:w-sm h-[calc(100%-1rem)] sm:h-full border border-neutral-200 z-20 relative`}
+        } overflow-clip w-[calc(100%-2rem)] sm:w-sm h-[calc(100%-1rem)] sm:h-full border border-neutral-200 dark:border-gray-700 z-20 relative`}
       >
         {/* Background Logo - hidden on eventCreator, eventList, and schedule views */}
         {view !== "eventCreator" && view !== "eventList" && view !== "schedule" && view !== "chatbot" && view !== "settings" && (

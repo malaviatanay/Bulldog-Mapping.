@@ -133,7 +133,8 @@ export default function ChatBot() {
             <div className="mt-4 flex flex-wrap gap-2 justify-center">
               {[
                 "Where is the library?",
-                "Where can I park?",
+                "How do I apply for financial aid?",
+                "What sports teams does Fresno State have?",
                 "Where can I eat on campus?",
               ].map((suggestion) => (
                 <button
