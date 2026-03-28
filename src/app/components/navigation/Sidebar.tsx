@@ -81,7 +81,7 @@ export default function Sidebar({ user, isAdmin, savedRoutes }: SidebarProps) {
         </button>
 
         {/* Content */}
-        <div className="relative z-10 h-full">
+        <div className="relative z-10 h-full pr-7 sm:pr-0">
           {view === "building" && <BuildingCard></BuildingCard>}
           {view === "event" && <EventCard></EventCard>}
           {view === "search" && <SearchBar></SearchBar>}
