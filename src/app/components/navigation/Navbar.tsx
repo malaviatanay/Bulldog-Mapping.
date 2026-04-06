@@ -21,9 +21,10 @@ export default function Navbar({ className = "", user, isAdmin}: NavbarProps) {
   return (
     <div
       className={`fixed slide-in-top top-0 left-0 w-full grid items-center justify-items-center z-30 pointer-events-none ${className}`}
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <nav
-        className={`w-full h-14  max-w-2xl  mt-4 rounded-xl px-2  bg-white dark:bg-gray-900 pointer-events-auto border border-neutral-200 dark:border-gray-700 flex items-center relative transition-all duration-150 ease-out-2 ${
+        className={`w-full h-14 max-w-2xl mt-2 mx-2 rounded-xl px-2 bg-white dark:bg-[#252626] pointer-events-auto border border-neutral-200 dark:border-white/10 flex items-center relative transition-all duration-150 ease-out-2 ${
           isDropPinMode ? "opacity-50 pointer-events-none" : ""
         }`}
       >
@@ -53,7 +54,7 @@ export default function Navbar({ className = "", user, isAdmin}: NavbarProps) {
               <button
                 key={label}
                 disabled={isDropPinMode}
-                className="button-depth group p-2 rounded-lg border border-transparent dark:border-gray-600 dark:bg-gray-800 hover:border-highlight-hover hover:bg-highlight dark:hover:border-highlight-hover dark:hover:bg-highlight transition-[transform_background-color_border-color] duration-150 ease-out-2 cursor-pointer hover:scale-105 active:scale-95 disabled:cursor-not-allowed"
+                className="button-depth group p-2 rounded-lg border border-transparent dark:border-white/10 dark:bg-[#2d2f2f] hover:border-highlight-hover hover:bg-highlight dark:hover:border-highlight-hover dark:hover:bg-highlight transition-[transform_background-color_border-color] duration-150 ease-out-2 cursor-pointer hover:scale-105 active:scale-95 disabled:cursor-not-allowed"
                 aria-label={label}
                 title={title}
                 onClick={() => {

@@ -134,7 +134,7 @@ export default function EventCard({ className = "" }: EventCardProps) {
       {/* Back Button */}
       <button
         onClick={() => setView("eventList")}
-        className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 transition-colors duration-150 cursor-pointer mb-3"
+        className="flex items-center gap-1 text-sm text-gray-500 dark:text-neutral-400 hover:text-gray-800 dark:hover:text-neutral-100 transition-colors duration-150 cursor-pointer mb-3"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Events
@@ -164,33 +164,33 @@ export default function EventCard({ className = "" }: EventCardProps) {
       {/* Conditional Info */}
       <div>
         {selectedEvent.description && (
-          <p className="text-gray-600 text-sm mb-3">{selectedEvent.description}</p>
+          <p className="text-gray-600 dark:text-neutral-300 text-sm mb-3">{selectedEvent.description}</p>
         )}
 
         <div className="flex gap-4 mb-3">
           {selectedEvent.dateStart && (
             <div className="flex-1">
-              <div className="font-semibold text-xs text-gray-900 mb-1">Start Date</div>
-              <div className="text-gray-500 text-base">{startTimeText}</div>
+              <div className="font-semibold text-xs text-gray-500 dark:text-neutral-400 uppercase tracking-wide mb-1">Start Date</div>
+              <div className="text-gray-800 dark:text-neutral-100 text-base font-medium">{startTimeText}</div>
             </div>
           )}
 
           {selectedEvent.dateEnd && (
             <div className="flex-1">
-              <div className="font-semibold text-xs text-gray-900 mb-1">End Date</div>
-              <div className="text-gray-500 text-base">{endTimeText}</div>
+              <div className="font-semibold text-xs text-gray-500 dark:text-neutral-400 uppercase tracking-wide mb-1">End Date</div>
+              <div className="text-gray-800 dark:text-neutral-100 text-base font-medium">{endTimeText}</div>
             </div>
           )}
         </div>
 
         {selectedEvent.metaTags && selectedEvent.metaTags.length > 0 && (
           <div className="mb-3">
-            <div className="font-semibold text-xs text-gray-900 mb-1">Tags</div>
+            <div className="font-semibold text-xs text-gray-500 dark:text-neutral-400 uppercase tracking-wide mb-1">Tags</div>
             <div className="flex flex-wrap gap-1">
               {selectedEvent.metaTags.map((tag, index) => (
                 <span
                   key={index}
-                  className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded"
+                  className="bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-neutral-300 text-xs px-2 py-1 rounded-md"
                 >
                   {tag}
                 </span>

@@ -407,14 +407,12 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
       </div>
 
       {/* Location Status */}
-      <div className={`mb-3 px-3 py-2 rounded-lg flex items-center gap-2 text-xs font-medium ${
+      <div className={`mb-3 px-3 py-2 rounded-lg flex items-center gap-2 text-xs font-medium border ${
         locationStatus === "granted"
-          ? "bg-blue-50 border border-blue-200 text-blue-700"
-          : locationStatus === "denied"
-            ? "bg-neutral-50 border border-neutral-200 text-neutral-500"
-            : "bg-neutral-50 border border-neutral-200 text-neutral-400"
+          ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950/30 dark:border-blue-800/50 dark:text-blue-300"
+          : "bg-neutral-100 border-neutral-200 text-neutral-500 dark:bg-white/5 dark:border-white/10 dark:text-neutral-400"
       }`}>
-        <Navigation className={`w-3.5 h-3.5 flex-shrink-0 ${locationStatus === "granted" ? "text-blue-500" : "text-neutral-400"}`} />
+        <Navigation className={`w-3.5 h-3.5 flex-shrink-0 ${locationStatus === "granted" ? "text-blue-500 dark:text-blue-400" : "text-neutral-400"}`} />
         {locationStatus === "granted" && "Using your live location as starting point"}
         {locationStatus === "denied" && "Location unavailable — route starts from first building"}
         {locationStatus === "pending" && "Getting your location..."}
@@ -422,10 +420,10 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
 
       {/* Saved Routes Section */}
       {savedRoutes.length > 0 && user && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <BookMarked className="w-4 h-4 text-green-700" />
-            <span className="text-sm font-medium text-green-800">Saved Routes</span>
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl dark:bg-green-950/20 dark:border-green-800/40">
+          <div className="flex items-center gap-2 mb-2.5">
+            <BookMarked className="w-4 h-4 text-green-600 dark:text-green-400" />
+            <span className="text-sm font-semibold text-green-800 dark:text-green-300">Saved Routes</span>
           </div>
 
           <div className="flex gap-1.5 mb-2">
@@ -436,18 +434,18 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
                 <button
                   key={day}
                   onClick={() => setSelectedDay(isSelected ? null : day)}
-                  className={`relative flex-1 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  className={`relative flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                     isSelected
-                      ? "bg-green-600 text-white"
+                      ? "bg-green-600 text-white shadow-sm"
                       : hasSaved
-                        ? "bg-green-200 text-green-800 hover:bg-green-300"
-                        : "bg-white border border-neutral-200 text-neutral-400 cursor-default"
+                        ? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-300 dark:hover:bg-green-900/60"
+                        : "bg-white border border-neutral-200 text-neutral-300 cursor-default dark:bg-white/5 dark:border-white/10 dark:text-neutral-600"
                   }`}
                   disabled={!hasSaved}
                 >
                   {DAY_LABELS[day].short}
                   {hasSaved && (
-                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full border border-green-50" />
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full border-2 border-green-50 dark:border-[#252626]" />
                   )}
                 </button>
               );
@@ -455,11 +453,11 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
           </div>
 
           {selectedSavedRoute && (
-            <div className="mt-2 pt-2 border-t border-green-200">
-              <p className="text-xs text-green-700 font-medium mb-1">
+            <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-800/40">
+              <p className="text-xs text-green-700 dark:text-green-400 font-medium mb-0.5">
                 {DAY_LABELS[selectedSavedRoute.dayOfWeek].full}
               </p>
-              <p className="text-xs text-green-600 mb-2 truncate">
+              <p className="text-xs text-green-600 dark:text-green-500 mb-2.5 truncate">
                 {selectedSavedRoute.buildingNames.join(" → ")}
               </p>
               <div className="flex gap-2">
@@ -474,7 +472,7 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
                 <button
                   onClick={() => handleDeleteSavedRoute(selectedSavedRoute.dayOfWeek)}
                   disabled={isDeleting}
-                  className="py-1.5 px-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center disabled:opacity-50"
+                  className="py-1.5 px-3 border text-red-500 border-red-200 rounded-lg hover:bg-red-50 dark:border-red-800/50 dark:hover:bg-red-950/30 transition-colors flex items-center justify-center disabled:opacity-50"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -486,28 +484,28 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
 
       {/* Error Message */}
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start gap-2">
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-start gap-2 dark:bg-red-950/30 dark:border-red-800/50 dark:text-red-400">
           <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Manual Entry */}
-      <div className="flex-1 flex flex-col">
-        <p className="text-sm text-neutral-600 mb-3">
+      <div className="flex-1 flex flex-col min-h-0">
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-3">
           Enter the buildings you need to visit in order. Start typing for suggestions.
         </p>
 
         {/* Parking Lot Option */}
-        <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <label className="flex items-center gap-2 cursor-pointer">
+        <div className="mb-3 p-3 rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-white/5">
+          <label className="flex items-center gap-2.5 cursor-pointer">
             <input
               type="checkbox"
               checked={startFromParking}
               onChange={(e) => setStartFromParking(e.target.checked)}
-              className="w-4 h-4 text-highlight focus:ring-highlight"
+              className="w-4 h-4 rounded text-highlight focus:ring-highlight accent-highlight"
             />
-            <span className="text-sm font-medium text-blue-900">
+            <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
               Start from parking lot
             </span>
           </label>
@@ -515,7 +513,7 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
             <select
               value={selectedParkingLot}
               onChange={(e) => setSelectedParkingLot(e.target.value)}
-              className="mt-2 w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-highlight text-sm bg-white"
+              className="mt-2.5 w-full px-3 py-2 border border-neutral-300 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-highlight text-sm bg-white dark:bg-[#2d2f2f] dark:text-neutral-200"
             >
               <option value="">Select a parking lot</option>
               {parkingLots.map((lot) => (
@@ -527,11 +525,11 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
           )}
         </div>
 
-        <div className="space-y-3 flex-1 overflow-y-auto px-1 py-1">
+        <div className="space-y-3 flex-1 overflow-y-auto px-0.5 py-1">
           {buildingEntries.map((entry, index) => (
             <div key={index} className="flex flex-col gap-1.5">
               <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-highlight text-white text-xs flex items-center justify-center flex-shrink-0">
+                <span className="w-6 h-6 rounded-full bg-highlight text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
                   {index + 1}
                 </span>
                 <input
@@ -539,7 +537,7 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
                   value={entry.building}
                   onChange={(e) => updateBuildingEntry(index, "building", e.target.value)}
                   placeholder="e.g., McKee-Fisk, Science 1, Peters Business"
-                  className="flex-1 px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-transparent text-sm"
+                  className="flex-1 px-3 py-2 border border-neutral-300 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-highlight focus:border-transparent text-sm bg-white dark:bg-[#2d2f2f] dark:text-neutral-100 dark:placeholder-neutral-500"
                   list={`suggestions-${index}`}
                 />
                 <datalist id={`suggestions-${index}`}>
@@ -550,7 +548,7 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
                 {buildingEntries.length > 1 && (
                   <button
                     onClick={() => removeBuildingEntry(index)}
-                    className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors"
+                    className="p-2 text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -558,21 +556,21 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
               </div>
               <div className="flex items-center gap-2 pl-8">
                 <div className="flex items-center gap-1.5 flex-1">
-                  <span className="text-xs text-neutral-500 whitespace-nowrap">Start</span>
+                  <span className="text-xs text-neutral-400 whitespace-nowrap">Start</span>
                   <input
                     type="time"
                     value={entry.startTime}
                     onChange={(e) => updateBuildingEntry(index, "startTime", e.target.value)}
-                    className="flex-1 px-2 py-1.5 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-transparent text-sm"
+                    className="flex-1 px-2 py-1.5 border border-neutral-300 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-highlight focus:border-transparent text-sm bg-white dark:bg-[#2d2f2f] dark:text-neutral-200"
                   />
                 </div>
                 <div className="flex items-center gap-1.5 flex-1">
-                  <span className="text-xs text-neutral-500 whitespace-nowrap">End</span>
+                  <span className="text-xs text-neutral-400 whitespace-nowrap">End</span>
                   <input
                     type="time"
                     value={entry.endTime}
                     onChange={(e) => updateBuildingEntry(index, "endTime", e.target.value)}
-                    className="flex-1 px-2 py-1.5 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-transparent text-sm"
+                    className="flex-1 px-2 py-1.5 border border-neutral-300 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-highlight focus:border-transparent text-sm bg-white dark:bg-[#2d2f2f] dark:text-neutral-200"
                   />
                 </div>
               </div>
@@ -582,7 +580,7 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
 
         <button
           onClick={addBuildingEntry}
-          className="mt-3 w-full py-2 border-2 border-dashed border-neutral-300 rounded-lg text-neutral-500 hover:border-highlight hover:text-highlight transition-colors flex items-center justify-center gap-2 text-sm"
+          className="mt-3 w-full py-2 border-2 border-dashed border-neutral-300 dark:border-white/15 rounded-lg text-neutral-400 dark:text-neutral-500 hover:border-highlight hover:text-highlight dark:hover:border-highlight dark:hover:text-highlight transition-colors flex items-center justify-center gap-2 text-sm"
         >
           <Plus className="w-4 h-4" />
           Add Another Building
@@ -591,7 +589,7 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
         <button
           onClick={processManualEntry}
           disabled={buildingEntries.every((e) => e.building.trim().length === 0) || isProcessing}
-          className="button-depth mt-4 w-full bg-highlight text-white py-3 rounded-lg border border-highlight-hover hover:bg-highlight-hover transition-[transform_background-color] duration-150 ease-out-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+          className="button-depth mt-4 w-full bg-highlight text-white py-3 rounded-xl border border-highlight-hover hover:bg-highlight-hover transition-[transform_background-color] duration-150 ease-out-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 font-medium"
         >
           {isProcessing ? (
             <>
@@ -614,7 +612,7 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
         {buildingEntries.some((e) => e.building.trim().length > 0) && (
           <button
             onClick={handleNewSchedule}
-            className="mt-2 w-full py-2 border border-neutral-300 text-neutral-600 rounded-lg hover:bg-neutral-50 transition-colors text-sm"
+            className="mt-2 w-full py-2 border border-neutral-200 dark:border-white/10 text-neutral-500 dark:text-neutral-400 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors text-sm"
           >
             New Schedule
           </button>

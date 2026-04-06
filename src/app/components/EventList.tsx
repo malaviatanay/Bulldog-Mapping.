@@ -114,13 +114,13 @@ export default function EventList({
 
   // Calendar helper functions
   const eventColors = [
-    "bg-green-600",
-    "bg-blue-600",
-    "bg-purple-600",
-    "bg-orange-500",
-    "bg-pink-600",
-    "bg-teal-600",
-    "bg-indigo-600",
+    "bg-blue-500/80",
+    "bg-violet-500/80",
+    "bg-teal-600/80",
+    "bg-sky-500/80",
+    "bg-indigo-500/80",
+    "bg-cyan-600/80",
+    "bg-slate-500/80",
   ];
 
   const getEventColor = (eventId: string) => {
@@ -195,13 +195,13 @@ export default function EventList({
         <h2 className="text-xl font-semibold">Events</h2>
         <div className="flex items-center gap-1">
           {/* View Toggle */}
-          <div className="flex bg-gray-100 rounded-lg p-0.5">
+          <div className="flex bg-gray-100 dark:bg-white/10 rounded-lg p-0.5">
             <button
               onClick={() => setViewMode("calendar")}
               className={`p-1.5 rounded-md transition-colors duration-150 cursor-pointer ${
                 viewMode === "calendar"
-                  ? "bg-white shadow-sm text-gray-900"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-white dark:bg-[#363838] shadow-sm text-gray-900 dark:text-white"
+                  : "text-gray-500 dark:text-neutral-400 hover:text-gray-700 dark:hover:text-white"
               }`}
               aria-label="Calendar view"
               title="Calendar view"
@@ -212,8 +212,8 @@ export default function EventList({
               onClick={() => setViewMode("list")}
               className={`p-1.5 rounded-md transition-colors duration-150 cursor-pointer ${
                 viewMode === "list"
-                  ? "bg-white shadow-sm text-gray-900"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-white dark:bg-[#363838] shadow-sm text-gray-900 dark:text-white"
+                  : "text-gray-500 dark:text-neutral-400 hover:text-gray-700 dark:hover:text-white"
               }`}
               aria-label="List view"
               title="List view"
@@ -247,7 +247,7 @@ export default function EventList({
           {/* Month Title */}
           <h3 className="text-2xl font-bold mb-3">
             {calendarDate.toLocaleDateString("en-US", { month: "long" })}{" "}
-            <span className="text-gray-400">
+            <span className="text-gray-400 dark:text-neutral-500">
               {calendarDate.getFullYear()}
             </span>
           </h3>
@@ -256,30 +256,30 @@ export default function EventList({
           <div className="flex items-center justify-end gap-1 mb-3">
             <button
               onClick={prevMonth}
-              className="p-1 rounded-md hover:bg-gray-100 transition-colors duration-150 cursor-pointer"
+              className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 cursor-pointer"
             >
-              <ChevronLeft className="w-4 h-4 text-gray-600" />
+              <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-neutral-400" />
             </button>
             <button
               onClick={goToToday}
-              className="px-2.5 py-1 text-xs font-medium rounded-md border border-gray-200 hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
+              className="px-2.5 py-1 text-xs font-medium rounded-md border border-gray-200 dark:border-white/15 hover:bg-gray-50 dark:hover:bg-white/5 dark:text-neutral-300 transition-colors duration-150 cursor-pointer"
             >
               Today
             </button>
             <button
               onClick={nextMonth}
-              className="p-1 rounded-md hover:bg-gray-100 transition-colors duration-150 cursor-pointer"
+              className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 cursor-pointer"
             >
-              <ChevronRight className="w-4 h-4 text-gray-600" />
+              <ChevronRight className="w-4 h-4 text-gray-600 dark:text-neutral-400" />
             </button>
           </div>
 
           {/* Day Headers */}
-          <div className="grid grid-cols-7 border-b border-gray-200">
+          <div className="grid grid-cols-7 border-b border-gray-200 dark:border-white/10">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
               <div
                 key={day}
-                className="text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wide py-1.5"
+                className="text-center text-[11px] font-semibold text-gray-500 dark:text-neutral-500 uppercase tracking-wide py-1.5"
               >
                 {day}
               </div>
@@ -287,9 +287,9 @@ export default function EventList({
           </div>
 
           {/* Calendar Grid */}
-          <div className="border-l border-gray-200">
+          <div className="border-l border-gray-200 dark:border-white/10">
             {getCalendarWeeks(calendarDate).map((week, weekIdx) => (
-              <div key={weekIdx} className="grid grid-cols-7 border-b border-gray-200">
+              <div key={weekIdx} className="grid grid-cols-7 border-b border-gray-200 dark:border-white/10">
                 {week.map((day, dayIdx) => {
                   const dayEvents = day !== null ? getEventsForDay(day) : [];
                   const maxVisible = 2;
@@ -298,9 +298,9 @@ export default function EventList({
                   return (
                     <div
                       key={dayIdx}
-                      className={`min-h-[72px] border-r border-gray-200 p-1 flex flex-col transition-colors duration-100 ${
-                        day !== null ? "hover:bg-gray-50 cursor-pointer" : "bg-gray-50/50"
-                      } ${selectedDay === day && day !== null ? "bg-blue-50" : ""}`}
+                      className={`min-h-[72px] border-r border-gray-200 dark:border-white/10 p-1 flex flex-col transition-colors duration-100 ${
+                        day !== null ? "hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer" : "bg-gray-50/50 dark:bg-white/[0.02]"
+                      } ${selectedDay === day && day !== null ? "bg-blue-50 dark:bg-blue-950/30" : ""}`}
                       onClick={() => {
                         if (day !== null) {
                           setSelectedDay(selectedDay === day ? null : day);
@@ -315,7 +315,7 @@ export default function EventList({
                               className={`text-xs leading-none flex items-center justify-center ${
                                 isToday(day)
                                   ? "bg-red-500 text-white font-bold w-5 h-5 rounded-full"
-                                  : "text-gray-700 font-medium w-5 h-5"
+                                  : "text-gray-700 dark:text-neutral-400 font-medium w-5 h-5"
                               }`}
                             >
                               {day}
@@ -338,7 +338,7 @@ export default function EventList({
                               </button>
                             ))}
                             {remaining > 0 && (
-                              <span className="text-[9px] text-gray-500 font-medium px-1">
+                              <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-medium px-1">
                                 +{remaining} more
                               </span>
                             )}
@@ -354,20 +354,23 @@ export default function EventList({
 
           {/* Selected Day Detail */}
           {selectedDay !== null && getEventsForDay(selectedDay).length > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <p className="text-sm font-semibold text-gray-800 mb-2">
-                {new Date(
-                  calendarDate.getFullYear(),
-                  calendarDate.getMonth(),
-                  selectedDay
-                ).toLocaleDateString("en-US", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </p>
+            <div key={selectedDay} className="calendar-day-reveal mt-3 pt-3 border-t-2 border-highlight/60 dark:border-highlight/40">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-highlight animate-pulse flex-shrink-0" />
+                <p className="text-sm font-semibold text-gray-800 dark:text-neutral-200">
+                  {new Date(
+                    calendarDate.getFullYear(),
+                    calendarDate.getMonth(),
+                    selectedDay
+                  ).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
               <ul className="flex flex-col gap-2">
-                {getEventsForDay(selectedDay).map((event: Event) => {
+                {getEventsForDay(selectedDay).map((event: Event, i: number) => {
                   const startDate = new Date(event.dateStart);
                   const endDate = event.dateEnd ? new Date(event.dateEnd) : null;
                   let variant: "live" | "upcoming" | "past" = "upcoming";
@@ -377,7 +380,11 @@ export default function EventList({
                     variant = "past";
                   }
                   return (
-                    <li key={event.id}>
+                    <li
+                      key={event.id}
+                      className="calendar-card-pop"
+                      style={{ "--index": i } as React.CSSProperties}
+                    >
                       <EventCardMin
                         dateEnd={event.dateEnd}
                         isApproved={event.isApproved}
@@ -405,7 +412,7 @@ export default function EventList({
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-2 fade-in-heading">
             <span className="inline-block w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
-            <span className="font-semibold pl-1 text-sm text-yellow-600">
+            <span className="font-semibold pl-1 text-sm text-yellow-600 dark:text-yellow-400">
               Awaiting Approval
             </span>
           </div>
@@ -456,7 +463,7 @@ export default function EventList({
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-2 fade-in-heading">
             <span className="inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-            <span className="font-semibold text-sm pl-1 text-red-600">
+            <span className="font-semibold text-sm pl-1 text-red-600 dark:text-red-400">
               Live Events
             </span>
           </div>
@@ -491,7 +498,7 @@ export default function EventList({
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-2 fade-in-heading">
             <span className="inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
-            <span className="font-semibold text-sm pl-1 text-blue-600">
+            <span className="font-semibold text-sm pl-1 text-blue-600 dark:text-blue-400">
               Upcoming Events
             </span>
           </div>
@@ -526,7 +533,7 @@ export default function EventList({
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-2 fade-in-heading">
             <span className="inline-block w-2 h-2 bg-gray-400 rounded-full"></span>
-            <span className="font-semibold text-sm pl-1 text-gray-600">
+            <span className="font-semibold text-sm pl-1 text-gray-600 dark:text-neutral-400">
               Past Events
             </span>
           </div>

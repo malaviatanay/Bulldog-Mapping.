@@ -244,19 +244,19 @@ html {
 }
 
 .dark {
-  --background: #1a2536;
+  --background: #252626;
   --foreground: #e2e8f0;
-  --card: #1f304a;
+  --card: #2d2f2f;
   --card-foreground: #e2e8f0;
-  --popover: #1f304a;
+  --popover: #2d2f2f;
   --popover-foreground: #e2e8f0;
   --primary: #e2e8f0;
-  --primary-foreground: #1a2536;
-  --secondary: #253a5e;
+  --primary-foreground: #252626;
+  --secondary: #363838;
   --secondary-foreground: #e2e8f0;
-  --muted: #253a5e;
-  --muted-foreground: #8fa3c0;
-  --accent: #253a5e;
+  --muted: #363838;
+  --muted-foreground: #9aa0a6;
+  --accent: #363838;
   --accent-foreground: #e2e8f0;
   --destructive: oklch(0.704 0.191 22.216);
   --border: rgba(255, 255, 255, 0.08);
@@ -267,21 +267,21 @@ html {
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: #1f304a;
+  --sidebar: #252626;
   --sidebar-foreground: #e2e8f0;
   --sidebar-primary: #4a8fd4;
   --sidebar-primary-foreground: #e2e8f0;
-  --sidebar-accent: #253a5e;
+  --sidebar-accent: #363838;
   --sidebar-accent-foreground: #e2e8f0;
   --sidebar-border: rgba(255, 255, 255, 0.08);
   --sidebar-ring: #4a7aaa;
 }
 
-/* Google Maps-style dark mode — remap Tailwind gray utilities to navy */
-.dark .bg-gray-900, .dark .dark\:bg-gray-900 { background-color: #1a2536; }
-.dark .bg-gray-800, .dark .dark\:bg-gray-800 { background-color: #1f304a; }
-.dark .bg-gray-700, .dark .dark\:bg-gray-700 { background-color: #253a5e; }
-.dark .bg-gray-100, .dark .dark\:bg-gray-100 { background-color: #1f304a; }
+/* Dark mode — remap Tailwind gray utilities to match #252626 palette */
+.dark .bg-gray-900, .dark .dark\:bg-gray-900 { background-color: #252626; }
+.dark .bg-gray-800, .dark .dark\:bg-gray-800 { background-color: #2d2f2f; }
+.dark .bg-gray-700, .dark .dark\:bg-gray-700 { background-color: #363838; }
+.dark .bg-gray-100, .dark .dark\:bg-gray-100 { background-color: #2d2f2f; }
 .dark .border-gray-700, .dark .dark\:border-gray-700 { border-color: rgba(255, 255, 255, 0.1); }
 .dark .border-gray-600, .dark .dark\:border-gray-600 { border-color: rgba(255, 255, 255, 0.12); }
 .dark .text-gray-100, .dark .dark\:text-gray-100 { color: #e2e8f0; }
@@ -377,6 +377,39 @@ html {
     opacity: 1;
   }
   
+}
+
+/* Calendar day detail reveal */
+.calendar-day-reveal {
+  animation: calendar-day-reveal 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes calendar-day-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.calendar-card-pop {
+  opacity: 0;
+  animation: calendar-card-pop 0.4s cubic-bezier(0.34, 1.45, 0.64, 1) forwards;
+  animation-delay: calc(60ms + var(--index) * 70ms);
+}
+
+@keyframes calendar-card-pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @supports (corner-shape: squircle) {

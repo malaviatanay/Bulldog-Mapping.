@@ -74,6 +74,7 @@ export default function MapTest() {
   } = useMapContext();
   const { setView, setIsOpen } = useSidebar();
   const { resolvedTheme: theme } = useTheme();
+  const constructionZonesRef = useRef(constructionZones);
 
   const [center, setCenter] = useState<[number, number]>(INTITIAL_CENTER);
   const [zoom, setZoom] = useState<number>(INITIAL_ZOOM);
@@ -82,6 +83,9 @@ export default function MapTest() {
   );
   // Track when map is fully loaded and ready for layer operations
   const [mapReady, setMapReady] = useState(false);
+
+  // Keep ref in sync so style.load callbacks always have current zones
+  useEffect(() => { constructionZonesRef.current = constructionZones; }, [constructionZones]);
 
   // Handler for event clicks (called from EventMarker component)
   const handleEventClick = (event: Event) => {
@@ -247,6 +251,50 @@ export default function MapTest() {
 
       // Apply Google Maps dark palette to base map layers
       if (theme === "dark") applyDarkMapPalette(map);
+
+      // Re-add construction zones after style swap
+      const zonesToRender = constructionZonesRef.current.filter(
+        (zone) => zone.isActive && zone.isApproved
+      );
+      if (zonesToRender.length > 0 && !map.getSource("construction-zones")) {
+        try {
+          map.addSource("construction-zones", {
+            type: "geojson",
+            data: {
+              type: "FeatureCollection",
+              features: zonesToRender.map((zone) => ({
+                type: "Feature" as const,
+                id: zone.id,
+                geometry: zone.geojson?.geometry ?? zone.geojson,
+                properties: {
+                  name: zone.name,
+                  description: zone.description,
+                  startDate: zone.startDate,
+                  endDate: zone.endDate,
+                },
+              })),
+            },
+          });
+          map.addLayer({
+            id: "construction-zones-fill",
+            type: "fill",
+            source: "construction-zones",
+            paint: { "fill-color": "#ff4444", "fill-opacity": 0.3 },
+          });
+          map.addLayer({
+            id: "construction-zones-outline",
+            type: "line",
+            source: "construction-zones",
+            paint: {
+              "line-color": "#ff0000",
+              "line-width": 2,
+              "line-dasharray": [2, 2],
+            },
+          });
+        } catch (e) {
+          console.warn("Error re-adding construction zones after style swap:", e);
+        }
+      }
     });
 
     map.setStyle(newStyle);
@@ -329,7 +377,7 @@ export default function MapTest() {
         mapRef.current.off("click", handleMapClickWithBuilding);
         mapRef.current.off("touchstart", handleTouchStart);
         mapRef.current.off("touchend", handleTouchEnd);
-        mapRef.current.getCanvas().style.cursor = "";
+        mapRef.current.getCanvas()?.style && (mapRef.current.getCanvas().style.cursor = "");
       }
     };
   }, [
@@ -388,7 +436,7 @@ export default function MapTest() {
             features: zonesToRender.map((zone) => ({
               type: "Feature" as const,
               id: zone.id,
-              geometry: zone.geojson.geometry,
+              geometry: zone.geojson?.geometry ?? zone.geojson,
               properties: {
                 name: zone.name,
                 description: zone.description,

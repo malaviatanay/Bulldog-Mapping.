@@ -54,7 +54,7 @@ export default function Sidebar({ user, isAdmin, savedRoutes }: SidebarProps) {
         </span>
       </button>
       <menu
-        className={`bg-white dark:bg-gray-900 dark:text-gray-100 p-4 rounded-2xl overflow-y-auto sm:rounded-xl ${
+        className={`bg-white dark:bg-[#252626] dark:text-gray-100 p-4 rounded-2xl overflow-y-auto sm:rounded-xl ${
           isOpen ? "w-full" : "pointer-events-none"
         } overflow-clip w-[calc(100%-2rem)] sm:w-sm h-[calc(100%-1rem)] sm:h-full border border-neutral-200 dark:border-gray-700 z-20 relative`}
       >

@@ -92,18 +92,18 @@ export default function ConstructionZoneCard({ zone, onEdit, isAdmin = false }: 
     <div
       className={`p-3 rounded-lg border cursor-pointer transition-all ${
         !zone.isApproved
-          ? "border-yellow-300 bg-yellow-50 hover:bg-yellow-100"
+          ? "border-yellow-300 bg-yellow-50 hover:bg-yellow-100 dark:border-yellow-700 dark:bg-yellow-950/40 dark:hover:bg-yellow-950/60"
           : zone.isActive
-          ? "border-red-300 bg-red-50 hover:bg-red-100"
-          : "border-gray-300 bg-gray-50 hover:bg-gray-100"
+          ? "border-red-300 bg-red-50 hover:bg-red-100 dark:border-red-700 dark:bg-red-950/40 dark:hover:bg-red-950/60"
+          : "border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800/60 dark:hover:bg-gray-800"
       }`}
       onClick={handleClick}
     >
       <div className="flex items-start justify-between mb-1">
         <div className="flex-1">
-          <h3 className="font-semibold text-sm">{zone.name}</h3>
+          <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100">{zone.name}</h3>
           {!zone.isApproved && (
-            <span className="text-xs text-yellow-600 font-medium">
+            <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
               Pending Approval
             </span>
           )}
@@ -153,11 +153,11 @@ export default function ConstructionZoneCard({ zone, onEdit, isAdmin = false }: 
       </div>
 
       {zone.description && (
-        <p className="text-xs text-gray-600 mb-2">{zone.description}</p>
+        <p className="text-xs text-gray-600 dark:text-gray-300 mb-2">{zone.description}</p>
       )}
 
       {(zone.startDate || zone.endDate) && (
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-gray-500 dark:text-gray-400">
           {zone.startDate && (
             <span>Start: {new Date(zone.startDate).toLocaleDateString()}</span>
           )}
