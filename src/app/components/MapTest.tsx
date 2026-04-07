@@ -185,6 +185,9 @@ export default function MapTest() {
       // Apply Google Maps dark palette to base map layers
       if (theme === "dark") applyDarkMapPalette(mapRef.current);
 
+      // Track the initial style so the theme-switch effect doesn't re-set it
+      currentStyleRef.current = theme === "dark" ? DARK_STYLE : LIGHT_STYLE;
+
       mapContainerRef.current?.setAttribute("data-loading", "false");
 
       // Signal that the map is fully loaded and ready for layer operations
@@ -196,11 +199,17 @@ export default function MapTest() {
     };
   }, [buildingPolygons]);
 
+  // Track which style URL is currently loaded to avoid unnecessary setStyle calls
+  const currentStyleRef = useRef<string | null>(null);
+
   // Switch map style when theme changes
   useEffect(() => {
     if (!mapRef.current || !mapReady) return;
     const map = mapRef.current;
     const newStyle = theme === "dark" ? DARK_STYLE : LIGHT_STYLE;
+
+    // Skip if we already have the correct style loaded
+    if (currentStyleRef.current === newStyle) return;
 
     map.once("style.load", () => {
       // Re-add building polygons after style swap
@@ -295,6 +304,8 @@ export default function MapTest() {
           console.warn("Error re-adding construction zones after style swap:", e);
         }
       }
+
+      currentStyleRef.current = newStyle;
     });
 
     map.setStyle(newStyle);
@@ -306,6 +317,7 @@ export default function MapTest() {
 
     const queryAndOpenBuilding = (point: mapboxgl.Point) => {
       if (!mapRef.current) return;
+      if (!mapRef.current.getLayer("buildings-fill")) return;
       const hitbox = 20;
       const features = mapRef.current.queryRenderedFeatures(
         [
@@ -472,22 +484,38 @@ export default function MapTest() {
         const buildPopupHTML = (props: Record<string, unknown>) => {
           const name = (props?.name as string) ?? "Construction Zone";
           const description = (props?.description as string) ?? null;
-          const startDate = props?.startDate ? new Date(props.startDate as string).toLocaleDateString() : null;
-          const endDate = props?.endDate ? new Date(props.endDate as string).toLocaleDateString() : null;
-          const dateLine = startDate && endDate
-            ? `<p style="margin:4px 0 0;color:#b45309;font-size:11px;">📅 ${startDate} – ${endDate}</p>`
-            : startDate
-              ? `<p style="margin:4px 0 0;color:#b45309;font-size:11px;">📅 Started ${startDate}</p>`
-              : "";
+          const startDate = props?.startDate ? new Date(props.startDate as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
+          const endDate = props?.endDate ? new Date(props.endDate as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
+          const isDark = !!document.querySelector(".dark");
+
+          const bg = isDark ? "#2d2f2f" : "#ffffff";
+          const border = isDark ? "rgba(255,255,255,0.08)" : "#f3f4f6";
+          const namColor = isDark ? "#f1f5f9" : "#111827";
+          const descColor = isDark ? "#94a3b8" : "#6b7280";
+          const dateColor = isDark ? "#fbbf24" : "#d97706";
+          const dateBg = isDark ? "rgba(251,191,36,0.12)" : "#fffbeb";
+          const dateBorder = isDark ? "rgba(251,191,36,0.25)" : "#fde68a";
+
+          const dateSection = startDate
+            ? `<div style="margin-top:10px;padding:6px 8px;background:${dateBg};border:1px solid ${dateBorder};border-radius:6px;display:flex;align-items:center;gap:6px;">
+                <span style="font-size:13px;">📅</span>
+                <span style="font-size:11px;font-weight:600;color:${dateColor};">
+                  ${startDate}${endDate ? ` – ${endDate}` : ""}
+                </span>
+              </div>`
+            : "";
+
           return `
-            <div style="font-family:sans-serif;max-width:220px;padding:4px 2px;">
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-                <span style="font-size:20px;">🚧</span>
-                <strong style="font-size:13px;color:#dc2626;">Construction Zone</strong>
+            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;width:220px;background:${bg};border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
+              <div style="background:linear-gradient(135deg,#dc2626,#ef4444);padding:10px 12px;display:flex;align-items:center;gap:8px;">
+                <span style="font-size:18px;line-height:1;">🚧</span>
+                <span style="font-size:11px;font-weight:700;color:#fff;letter-spacing:0.06em;text-transform:uppercase;">Construction Zone</span>
               </div>
-              <p style="margin:0;font-size:13px;font-weight:600;color:#1f2937;">${name}</p>
-              ${description ? `<p style="margin:4px 0 0;font-size:12px;color:#4b5563;">${description}</p>` : ""}
-              ${dateLine}
+              <div style="padding:10px 12px;border:1px solid ${border};border-top:none;border-radius:0 0 12px 12px;">
+                <p style="margin:0;font-size:13px;font-weight:700;color:${namColor};line-height:1.4;">${name}</p>
+                ${description ? `<p style="margin:6px 0 0;font-size:11px;color:${descColor};line-height:1.5;">${description}</p>` : ""}
+                ${dateSection}
+              </div>
             </div>
           `;
         };

@@ -5,7 +5,7 @@ import { User } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { UserRound, Shield, SlidersHorizontal, Camera, Check, Loader2 } from "lucide-react";
+import { UserRound, Shield, SlidersHorizontal, Camera, Check, Loader2, Bell, CalendarClock } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 
 type SettingsTab = "about" | "security" | "preferences";
@@ -518,11 +518,73 @@ function ThemePreviewCard({
   );
 }
 
+function NotificationToggle({
+  icon,
+  label,
+  description,
+  enabled,
+  onToggle,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  description: string;
+  enabled: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 text-gray-500 dark:text-gray-400">{icon}</div>
+        <div>
+          <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{label}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{description}</p>
+        </div>
+      </div>
+      <button
+        onClick={onToggle}
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+          enabled ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
+        }`}
+        role="switch"
+        aria-checked={enabled}
+      >
+        <span
+          className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transform transition-transform duration-200 ease-in-out ${
+            enabled ? "translate-x-5" : "translate-x-0"
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
+
 function PreferencesSection() {
   const { theme, setTheme } = useTheme();
+  const [classReminders, setClassReminders] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const saved = localStorage.getItem("bulldog-notif-class-reminders");
+    return saved !== null ? saved === "true" : true;
+  });
+  const [eventNotifications, setEventNotifications] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const saved = localStorage.getItem("bulldog-notif-events");
+    return saved !== null ? saved === "true" : true;
+  });
+
+  const toggleClassReminders = () => {
+    const next = !classReminders;
+    setClassReminders(next);
+    localStorage.setItem("bulldog-notif-class-reminders", String(next));
+  };
+
+  const toggleEventNotifications = () => {
+    const next = !eventNotifications;
+    setEventNotifications(next);
+    localStorage.setItem("bulldog-notif-events", String(next));
+  };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <p className="text-sm text-gray-600 dark:text-gray-400">
         Customize your experience.
       </p>
@@ -550,6 +612,29 @@ function PreferencesSection() {
             label="Dark"
             selected={theme === "dark"}
             onClick={() => setTheme("dark")}
+          />
+        </div>
+      </div>
+
+      {/* Notifications */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+          Notifications
+        </label>
+        <div className="space-y-2">
+          <NotificationToggle
+            icon={<CalendarClock className="w-4 h-4" />}
+            label="Class Reminders"
+            description="Get notified before your classes start"
+            enabled={classReminders}
+            onToggle={toggleClassReminders}
+          />
+          <NotificationToggle
+            icon={<Bell className="w-4 h-4" />}
+            label="Event Notifications"
+            description="Get notified about new and upcoming campus events"
+            enabled={eventNotifications}
+            onToggle={toggleEventNotifications}
           />
         </div>
       </div>
