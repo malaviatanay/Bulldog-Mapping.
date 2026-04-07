@@ -22,7 +22,7 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
       {/* Heading */}
       <div className="mb-3">
         <div className="flex items-start justify-between gap-2 mb-2">
-          <h2 className="text-xl font-semibold">{selectedBuilding.name}</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{selectedBuilding.name}</h2>
           <Tag variant="building" />
         </div>
       </div>
@@ -30,11 +30,10 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
       {/* Image */}
       <div
         key={selectedBuilding.id}
-        className="relative w-full h-48 bg-gray-100 flex items-center justify-center mb-3  rounded-lg animate-image-intro"
+        className="relative w-full h-48 bg-gray-100 dark:bg-white/5 flex items-center justify-center mb-3 rounded-lg animate-image-intro"
       >
         {firstImage && firstImage != null ? (
-          <div className="w-full h-full relative ">
-            {/* Blurred glow image underneath */}
+          <div className="w-full h-full relative">
             <Image
               src={firstImage}
               alt=""
@@ -42,7 +41,6 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
               height={500}
               className="object-cover top-0 left-0 w-full h-full absolute z-10 col-start-1 row-start-1 blur-md scale-105 opacity-60 rounded-lg"
             />
-            {/* Main image on top */}
             <Image
               src={firstImage}
               alt={selectedBuilding.name}
@@ -52,22 +50,22 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
             />
           </div>
         ) : (
-          <Building className="w-16 h-16 text-gray-400" />
+          <Building className="w-16 h-16 text-gray-400 dark:text-neutral-600" />
         )}
       </div>
 
       {/* Conditional Info */}
       <div>
         {selectedBuilding.description && (
-          <p className="text-gray-600 text-sm mb-3">
+          <p className="text-gray-600 dark:text-gray-200 text-sm mb-3 leading-relaxed">
             {selectedBuilding.description}
           </p>
         )}
 
         {selectedBuilding.hoursOpen && (
           <div className="mb-3">
-            <div className="font-semibold text-xs text-gray-900 mb-1">Hours</div>
-            <div className="text-gray-500 text-base">
+            <div className="font-semibold text-xs text-gray-500 dark:text-gray-300 uppercase tracking-wide mb-1">Hours</div>
+            <div className="text-gray-800 dark:text-white text-base font-medium">
               {selectedBuilding.hoursOpen}
             </div>
           </div>
@@ -75,8 +73,8 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
 
         {selectedBuilding.daysOpen && (
           <div className="mb-3">
-            <div className="font-semibold text-xs text-gray-900 mb-1">Days</div>
-            <div className="text-gray-500 text-base">
+            <div className="font-semibold text-xs text-gray-500 dark:text-gray-300 uppercase tracking-wide mb-1">Days</div>
+            <div className="text-gray-800 dark:text-white text-base font-medium">
               {selectedBuilding.daysOpen}
             </div>
           </div>
@@ -84,8 +82,8 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
 
         {selectedBuilding.address && (
           <div className="mb-3">
-            <div className="font-semibold text-xs text-gray-900 mb-1">Address</div>
-            <div className="text-gray-500 text-base">
+            <div className="font-semibold text-xs text-gray-500 dark:text-gray-300 uppercase tracking-wide mb-1">Address</div>
+            <div className="text-gray-800 dark:text-white text-base font-medium">
               {selectedBuilding.address}
             </div>
           </div>
@@ -93,7 +91,7 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
 
         {selectedBuilding.website && (
           <div className="mb-3">
-            <div className="font-semibold text-xs text-gray-900 mb-1">Website</div>
+            <div className="font-semibold text-xs text-gray-500 dark:text-gray-300 uppercase tracking-wide mb-1">Website</div>
             <a
               href={selectedBuilding.website}
               target="_blank"
@@ -107,8 +105,8 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
 
         {selectedBuilding.floors && (
           <div className="mb-3">
-            <div className="font-semibold text-xs text-gray-900 mb-1">Floors</div>
-            <div className="text-gray-500 text-base">
+            <div className="font-semibold text-xs text-gray-500 dark:text-gray-300 uppercase tracking-wide mb-1">Floors</div>
+            <div className="text-gray-800 dark:text-white text-base font-medium">
               {selectedBuilding.floors}
             </div>
           </div>

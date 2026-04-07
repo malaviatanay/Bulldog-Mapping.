@@ -19,7 +19,7 @@ export default function UserBadge({ userData, isAdmin }: { userData: User | null
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2 cursor-pointer hover:bg-neutral-50 dark:hover:bg-gray-800 p-2 rounded-md transition-opacity">
+        <button suppressHydrationWarning className="flex items-center gap-2 cursor-pointer hover:bg-neutral-50 dark:hover:bg-gray-800 p-2 rounded-md transition-opacity">
           <div className="w-8 h-8 rounded-lg overflow-hidden">
             {user && user.user_metadata?.picture ? (
               <Image
