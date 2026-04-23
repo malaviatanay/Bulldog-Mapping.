@@ -50,6 +50,8 @@ type MapContextType = {
   flyToTarget: { lng: number; lat: number; zoom?: number } | null;
   scheduleRoute: ScheduleRouteState;
   drawingMode: DrawingModeState;
+  pendingEventMarker: [number, number] | null;
+  setPendingEventMarker: (coords: [number, number] | null) => void;
   setLastClickedCords: (cords: [number, number] | null) => void;
   setMapPointerEvents: (mode: MapPointerEvents) => void;
   setSelectedBuilding: (building: Building | null) => void;
@@ -117,6 +119,9 @@ export function MapProvider({
     isActive: false,
     drawnPolygon: null,
   });
+  const [pendingEventMarker, setPendingEventMarker] = useState<
+    [number, number] | null
+  >(null);
 
   const flyTo = (lng: number, lat: number, zoom?: number) => {
     setFlyToTarget({ lng, lat, zoom });
@@ -192,6 +197,8 @@ export function MapProvider({
     flyToTarget,
     scheduleRoute,
     drawingMode,
+    pendingEventMarker,
+    setPendingEventMarker,
     setLastClickedCords,
     setMapPointerEvents,
     setSelectedBuilding,

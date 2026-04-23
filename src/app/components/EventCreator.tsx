@@ -54,11 +54,20 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
         markerLat: lat.toString(),
         markerLng: lng.toString(),
       }));
+      MapCtx.setPendingEventMarker([lng, lat]);
       MapCtx.setLastClickedCords(null);
       MapCtx.setMapPointerEvents("all");
       setIsOpen(true);
     }
   }, [MapCtx, setIsOpen]);
+
+  // Clear the pending marker when this view unmounts
+  useEffect(() => {
+    return () => {
+      MapCtx.setPendingEventMarker(null);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -149,6 +158,7 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
         timeEnd: "",
       });
       setMetaTags([]);
+      MapCtx.setPendingEventMarker(null);
 
       // Show success message
       setShowSuccess(true);
@@ -323,6 +333,7 @@ export default function EventCreator({ className = "" }: EventCreatorProps) {
                     markerLat: "",
                     markerLng: "",
                   }));
+                  MapCtx.setPendingEventMarker(null);
                 }}
                 className="p-2 border border-neutral-200 rounded-lg hover:bg-neutral-100 transition-colors duration-150 ease-out-2 cursor-pointer"
                 title="Clear location"
