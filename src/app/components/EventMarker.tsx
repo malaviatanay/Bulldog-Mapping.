@@ -107,16 +107,25 @@ export default function EventMarker({
   const variantConfig = {
     live: {
       bgColor: "bg-red-500",
+      headerGradient: "bg-gradient-to-br from-red-500 to-rose-600",
+      accentBorder: "dark:shadow-[0_0_0_1px_rgba(244,63,94,0.25),0_8px_24px_-4px_rgba(244,63,94,0.35)]",
+      accentDot: "bg-red-400",
       saturation: "saturate-100",
       ping: true,
     },
     upcoming: {
       bgColor: "bg-blue-500",
+      headerGradient: "bg-gradient-to-br from-blue-500 to-indigo-600",
+      accentBorder: "dark:shadow-[0_0_0_1px_rgba(59,130,246,0.25),0_8px_24px_-4px_rgba(59,130,246,0.3)]",
+      accentDot: "bg-blue-400",
       saturation: "saturate-100",
       ping: false,
     },
     past: {
       bgColor: "bg-gray-500",
+      headerGradient: "bg-gradient-to-br from-gray-500 to-gray-600",
+      accentBorder: "",
+      accentDot: "bg-gray-400",
       saturation: "saturate-0",
       ping: false,
     },
@@ -152,32 +161,39 @@ export default function EventMarker({
         e.stopPropagation();
         onClick();
       }}
-      className={`bg-white w-[200px] border-1 overflow-clip border-neutral-100 hover:scale-105 active:scale-97 transition-transform ease-out-2 duration-150 rounded-xl shadow-md pointer-events-auto select-all relative z-40 cursor-pointer hover:shadow-xl ${config.saturation}`}
+      className={`bg-white/95 dark:bg-[#1f2122]/95 backdrop-blur-md w-[210px] border border-neutral-200 dark:border-white/10 overflow-hidden hover:scale-105 active:scale-97 transition-transform ease-out-2 duration-150 rounded-xl shadow-lg dark:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.6)] hover:shadow-xl dark:hover:shadow-[0_12px_32px_-4px_rgba(0,0,0,0.7)] pointer-events-auto select-all relative z-40 cursor-pointer ${config.accentBorder} ${config.saturation}`}
     >
       {/* Header with event name and countdown */}
       <div
-        className={`px-3 py-2 rounded-t-lg ${config.bgColor} text-white relative`}
+        className={`px-3 py-2 ${config.headerGradient} text-white relative overflow-hidden`}
       >
+        {/* Subtle shine overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
         {config.ping && (
-          <span className="!absolute button-depth inset-0 rounded-t-lg bg-red-500  opacity-75"></span>
+          <span className="absolute inset-0 bg-red-500 opacity-40 animate-pulse pointer-events-none" />
         )}
-        <div className="font-semibold text-sm truncate relative z-10">
+        <div className="font-semibold text-sm truncate relative z-10 drop-shadow-sm">
           {event.name || "Event"}
         </div>
         {timeUntil && (
-          <div className="text-xs opacity-90 mt-0.5 relative z-10">
-            {timeUntil.text === "Started" ? "Ongoing" : `in ${timeUntil.text}`}
+          <div className="flex items-center gap-1.5 text-[11px] font-medium opacity-95 mt-0.5 relative z-10">
+            <span className={`inline-block w-1.5 h-1.5 rounded-full ${config.accentDot} ${config.ping ? "animate-pulse" : ""}`} />
+            <span>
+              {timeUntil.text === "Started" ? "Ongoing" : `in ${timeUntil.text}`}
+            </span>
           </div>
         )}
       </div>
 
       {/* Content area */}
-      <div className="px-3 py-2 space-y-1">
+      <div className="px-3 py-2.5 space-y-1.5">
         {/* Date Start with time */}
         {event.dateStart && (
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-gray-500 font-medium">Starts:</span>
-            <span className={`${timeUntil?.color || "text-gray-700"} truncate`}>
+            <span className="text-gray-500 dark:text-neutral-500 font-medium min-w-[42px]">
+              Starts
+            </span>
+            <span className={`${timeUntil?.color || "text-gray-700"} dark:!text-neutral-200 font-medium truncate`}>
               {new Date(event.dateStart).toLocaleString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -191,8 +207,10 @@ export default function EventMarker({
         {/* Date Posted */}
         {event.datePosted && (
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-gray-500 font-medium">Posted:</span>
-            <span className="text-gray-400 truncate">
+            <span className="text-gray-500 dark:text-neutral-500 font-medium min-w-[42px]">
+              Posted
+            </span>
+            <span className="text-gray-400 dark:text-neutral-400 truncate">
               {new Date(event.datePosted).toLocaleDateString()}
             </span>
           </div>
@@ -200,7 +218,7 @@ export default function EventMarker({
 
         {/* Description */}
         {event.description && (
-          <div className="text-xs text-gray-600 mt-2 pt-2 border-t border-gray-200">
+          <div className="text-xs text-gray-600 dark:text-neutral-300 mt-2 pt-2 border-t border-gray-200 dark:border-white/10 leading-relaxed">
             <p className="line-clamp-2">{event.description}</p>
           </div>
         )}

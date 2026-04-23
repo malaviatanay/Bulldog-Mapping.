@@ -5,8 +5,9 @@ import { User } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { UserRound, Shield, SlidersHorizontal, Camera, Check, Loader2, Bell, CalendarClock } from "lucide-react";
+import { UserRound, Shield, SlidersHorizontal, Camera, Check, Loader2, Bell, CalendarClock, BellOff } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
+import { useNotifications } from "@/context/NotificationContext";
 
 type SettingsTab = "about" | "security" | "preferences";
 
@@ -560,28 +561,18 @@ function NotificationToggle({
 
 function PreferencesSection() {
   const { theme, setTheme } = useTheme();
-  const [classReminders, setClassReminders] = useState(() => {
-    if (typeof window === "undefined") return true;
-    const saved = localStorage.getItem("bulldog-notif-class-reminders");
-    return saved !== null ? saved === "true" : true;
-  });
-  const [eventNotifications, setEventNotifications] = useState(() => {
-    if (typeof window === "undefined") return true;
-    const saved = localStorage.getItem("bulldog-notif-events");
-    return saved !== null ? saved === "true" : true;
-  });
+  const {
+    prefs,
+    permission,
+    setClassReminders,
+    setEventNotifications,
+    setReminderMinutes,
+    requestPermission,
+    sendTestNotification,
+  } = useNotifications();
 
-  const toggleClassReminders = () => {
-    const next = !classReminders;
-    setClassReminders(next);
-    localStorage.setItem("bulldog-notif-class-reminders", String(next));
-  };
-
-  const toggleEventNotifications = () => {
-    const next = !eventNotifications;
-    setEventNotifications(next);
-    localStorage.setItem("bulldog-notif-events", String(next));
-  };
+  const reminderOptions = [5, 10, 15, 30, 60];
+  const isDev = process.env.NODE_ENV === "development";
 
   return (
     <div className="space-y-6">
@@ -621,22 +612,105 @@ function PreferencesSection() {
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
           Notifications
         </label>
+
+        {/* Browser permission banner */}
+        {permission !== "granted" && (
+          <div
+            className={`mb-3 p-3 rounded-lg border text-xs flex items-start gap-2.5 ${
+              permission === "denied"
+                ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300"
+                : "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-300"
+            }`}
+          >
+            {permission === "denied" ? (
+              <BellOff className="w-4 h-4 mt-0.5 shrink-0" />
+            ) : (
+              <Bell className="w-4 h-4 mt-0.5 shrink-0" />
+            )}
+            <div className="flex-1">
+              <p className="font-medium mb-0.5">
+                {permission === "denied"
+                  ? "Browser notifications blocked"
+                  : "Enable browser notifications"}
+              </p>
+              <p className="opacity-80 mb-1.5">
+                {permission === "denied"
+                  ? "Allow notifications for this site in your browser settings to get alerts."
+                  : "You'll still see notifications in the bell menu, but enable this to get alerts while the tab is in the background."}
+              </p>
+              {permission === "default" && (
+                <button
+                  onClick={() => requestPermission()}
+                  className="font-medium bg-blue-600 text-white px-2.5 py-1 rounded hover:bg-blue-700 transition-colors cursor-pointer"
+                >
+                  Enable
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="space-y-2">
           <NotificationToggle
             icon={<CalendarClock className="w-4 h-4" />}
             label="Class Reminders"
             description="Get notified before your classes start"
-            enabled={classReminders}
-            onToggle={toggleClassReminders}
+            enabled={prefs.classReminders}
+            onToggle={() => setClassReminders(!prefs.classReminders)}
           />
+          {prefs.classReminders && (
+            <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/30">
+              <label className="text-xs text-gray-600 dark:text-gray-400">
+                Remind me
+              </label>
+              <select
+                value={prefs.reminderMinutes}
+                onChange={(e) => setReminderMinutes(parseInt(e.target.value, 10))}
+                className="text-xs font-medium px-2 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              >
+                {reminderOptions.map((m) => (
+                  <option key={m} value={m}>
+                    {m} min before
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <NotificationToggle
             icon={<Bell className="w-4 h-4" />}
             label="Event Notifications"
             description="Get notified about new and upcoming campus events"
-            enabled={eventNotifications}
-            onToggle={toggleEventNotifications}
+            enabled={prefs.eventNotifications}
+            onToggle={() => setEventNotifications(!prefs.eventNotifications)}
           />
         </div>
+
+        {isDev && (
+          <div className="mt-3 p-3 rounded-lg border border-dashed border-amber-300 dark:border-amber-700/60 bg-amber-50/50 dark:bg-amber-950/20">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                Dev tools
+              </p>
+              <span className="text-[10px] text-amber-600/70 dark:text-amber-500/70">
+                development only
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => sendTestNotification("class")}
+                className="flex-1 text-xs font-medium px-2.5 py-1.5 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+              >
+                Test class reminder
+              </button>
+              <button
+                onClick={() => sendTestNotification("event")}
+                className="flex-1 text-xs font-medium px-2.5 py-1.5 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+              >
+                Test event notif
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -56,6 +56,7 @@ export default function MapTest() {
   const routeMarkersRef = useRef<{ marker: mapboxgl.Marker; root: Root }[]>([]);
   const drawRef = useRef<MapboxDraw | null>(null);
   const constructionPopupRef = useRef<mapboxgl.Popup | null>(null);
+  const pendingMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const {
     buildings,
     events,
@@ -70,6 +71,7 @@ export default function MapTest() {
     drawingMode,
     setDrawnPolygon,
     stopDrawing,
+    pendingEventMarker,
     ...sdbr
   } = useMapContext();
   const { setView, setIsOpen } = useSidebar();
@@ -889,6 +891,137 @@ export default function MapTest() {
       markersRef.current = [];
     };
   }, [events, isSimpleView, setSelectedEvent, setView, setIsOpen]);
+
+  // User location marker ("You are here")
+  useEffect(() => {
+    if (!mapRef.current || !mapReady) return;
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    const map = mapRef.current;
+
+    const el = document.createElement("div");
+    el.className = "user-location-marker";
+    el.innerHTML = `
+      <div class="user-location-marker__pulse"></div>
+      <div class="user-location-marker__core"></div>
+    `;
+
+    const marker = new mapboxgl.Marker({ element: el, anchor: "center" });
+    const popup = new mapboxgl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+      offset: 14,
+      className: "user-location-popup",
+    }).setHTML("You are here");
+
+    let attached = false;
+    let pinned = false;
+    const hasHover =
+      typeof window !== "undefined" &&
+      window.matchMedia("(hover: hover)").matches;
+
+    const showPopup = () => {
+      popup.setLngLat(marker.getLngLat()).addTo(map);
+    };
+    const hidePopup = () => popup.remove();
+
+    el.addEventListener("mouseenter", () => {
+      if (!attached) return;
+      showPopup();
+    });
+    el.addEventListener("mouseleave", () => {
+      if (pinned) return;
+      hidePopup();
+    });
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!attached) return;
+      if (hasHover) return;
+      pinned = !pinned;
+      if (pinned) showPopup();
+      else hidePopup();
+    });
+
+    let hasCentered = false;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const lngLat: [number, number] = [
+          pos.coords.longitude,
+          pos.coords.latitude,
+        ];
+        console.log(
+          "[location] lat=%s lng=%s accuracy=%sm",
+          pos.coords.latitude.toFixed(6),
+          pos.coords.longitude.toFixed(6),
+          Math.round(pos.coords.accuracy)
+        );
+        marker.setLngLat(lngLat);
+        if (!attached) {
+          marker.addTo(map);
+          attached = true;
+        }
+        if (!hasCentered) {
+          hasCentered = true;
+          map.flyTo({ center: lngLat, zoom: 17, duration: 1200, essential: true });
+        }
+        if (pinned || popup.isOpen()) popup.setLngLat(lngLat);
+      },
+      (err) => {
+        console.warn("Geolocation unavailable:", err.message);
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+      popup.remove();
+      marker.remove();
+    };
+  }, [mapReady]);
+
+  // Render a visual marker at the pending event location (during event creation)
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current;
+
+    // Remove any existing pending marker
+    if (pendingMarkerRef.current) {
+      pendingMarkerRef.current.remove();
+      pendingMarkerRef.current = null;
+    }
+
+    if (!pendingEventMarker) return;
+
+    const el = document.createElement("div");
+    el.className = "pending-event-marker";
+    el.style.cssText = `
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    `;
+    el.innerHTML = `
+      <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35));">
+        <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24s16-14 16-24C32 7.163 24.837 0 16 0z" fill="#dc2626"/>
+        <circle cx="16" cy="16" r="6" fill="white"/>
+      </svg>
+    `;
+
+    pendingMarkerRef.current = new mapboxgl.Marker({
+      element: el,
+      anchor: "bottom",
+    })
+      .setLngLat(pendingEventMarker)
+      .addTo(map);
+
+    return () => {
+      if (pendingMarkerRef.current) {
+        pendingMarkerRef.current.remove();
+        pendingMarkerRef.current = null;
+      }
+    };
+  }, [pendingEventMarker]);
 
   return (
     <div className="absolute w-full h-full left-0 right-0 bottom-0">

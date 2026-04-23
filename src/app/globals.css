@@ -456,3 +456,65 @@ html {
     border-radius: 40%;
   }
 }
+
+/* User location marker ("You are here") — minimal navy dot */
+.user-location-marker {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  pointer-events: auto;
+  display: grid;
+  place-items: center;
+}
+.user-location-marker__pulse {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(30, 58, 95, 0.4);
+  animation: user-location-pulse 2s ease-out infinite;
+  pointer-events: none;
+}
+.user-location-marker__core {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #1e3a5f;
+  border: 2px solid #ffffff;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.35),
+    0 0 0 0.5px rgba(0, 0, 0, 0.2);
+}
+.dark .user-location-marker__core {
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.6),
+    0 0 0 0.5px rgba(255, 255, 255, 0.15);
+}
+.user-location-popup .mapboxgl-popup-content {
+  padding: 5px 10px !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  background: #1e3a5f !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    0 0 0 0.5px rgba(255, 255, 255, 0.08) inset !important;
+  border: none !important;
+}
+.user-location-popup .mapboxgl-popup-tip {
+  border-top-color: #1e3a5f !important;
+  border-bottom-color: #1e3a5f !important;
+}
+@keyframes user-location-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}

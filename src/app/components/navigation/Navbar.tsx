@@ -5,6 +5,7 @@ import { useMapContext } from "@/context/MapContext";
 import Clock from "./Clock";
 import Image from "next/image";
 import UserBadge from "./UserBadge";
+import NotificationBell from "./NotificationBell";
 import { User } from "@supabase/supabase-js";
 
 type NavbarProps = {
@@ -40,7 +41,8 @@ export default function Navbar({ className = "", user, isAdmin}: NavbarProps) {
             />
           </div> */}
           <Clock className="hidden md:flex flex-1 justify-center dark:text-gray-300" />
-          <div className="buttons flex gap-1.5 flex-shrink-0">
+          <div className="buttons flex gap-1.5 flex-shrink-0 items-center">
+            <NotificationBell />
             {[
               { icon: Calendar, label: "Events", view: "eventList" as const },
               { icon: Route, label: "Schedule Route", title: "Upload Schedule", view: "schedule" as const },
