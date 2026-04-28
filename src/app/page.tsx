@@ -14,6 +14,9 @@ import { MapProvider } from "@/context/MapContext";
 import MapTest from "./components/MapTest";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { NotificationProvider } from "@/context/NotificationContext";
+import { NavigationProvider } from "@/context/NavigationContext";
+import NavigationBottomCard from "./components/navigation/NavigationBottomCard";
+import NavigationMode from "./components/navigation/NavigationMode";
 import Sidebar from "./components/navigation/Sidebar";
 import Navbar from "./components/navigation/Navbar";
 import { createClient } from "@/utils/supabase/server";
@@ -69,14 +72,18 @@ export default async function Home() {
       >
         <SidebarProvider>
           <NotificationProvider user={user} savedRoutes={savedRoutes}>
-            <Navbar user={user} isAdmin={adminStatus}></Navbar>
-            <main className="h-full bg-neutral-200 overflow-clip w-full relative">
-              <div className="absolute z-0 animate-loader-in pointer-events-none w-10 right-0 bottom-0 m-4 aspect-square ">
-                <Loader className="w-full h-full text-neutral-500 m-2 animate-loader-spin" />
-              </div>
-              <Sidebar user={user} isAdmin={adminStatus} savedRoutes={savedRoutes}></Sidebar>
-              <MapTest></MapTest>
-            </main>
+            <NavigationProvider>
+              <Navbar user={user} isAdmin={adminStatus}></Navbar>
+              <main className="h-full bg-neutral-200 overflow-clip w-full relative">
+                <div className="absolute z-0 animate-loader-in pointer-events-none w-10 right-0 bottom-0 m-4 aspect-square ">
+                  <Loader className="w-full h-full text-neutral-500 m-2 animate-loader-spin" />
+                </div>
+                <Sidebar user={user} isAdmin={adminStatus} savedRoutes={savedRoutes}></Sidebar>
+                <MapTest></MapTest>
+                <NavigationBottomCard />
+                <NavigationMode />
+              </main>
+            </NavigationProvider>
           </NotificationProvider>
         </SidebarProvider>
         {/* <Map></Map> */}

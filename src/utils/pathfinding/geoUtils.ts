@@ -77,10 +77,20 @@ export function calculateWalkTime(distanceMeters: number): number {
  * @returns Formatted string
  */
 export function formatDistance(meters: number): string {
-  if (meters < 1000) {
-    return `${Math.round(meters)} m`;
+  // Display in feet under ~0.1 mi (160 m), otherwise miles. Matches the
+  // unit convention students would expect on a US campus.
+  const METERS_PER_MILE = 1609.344;
+  const METERS_PER_FOOT = 0.3048;
+  if (meters < 161) {
+    const feet = Math.round(meters / METERS_PER_FOOT);
+    // Round to nearest 10 ft for readability
+    return `${Math.round(feet / 10) * 10} ft`;
   }
-  return `${(meters / 1000).toFixed(1)} km`;
+  const miles = meters / METERS_PER_MILE;
+  if (miles < 10) {
+    return `${miles.toFixed(1)} mi`;
+  }
+  return `${Math.round(miles)} mi`;
 }
 
 /**

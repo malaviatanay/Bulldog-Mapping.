@@ -117,11 +117,11 @@ const EventCardMin: React.FC<EventCardMinProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className={`flex w-full overflow-clip justify-between p-3 bg-white rounded-lg border border-neutral-200 ${
+      className={`flex w-full overflow-clip justify-between p-3 bg-white dark:bg-[#2d2f2f] rounded-lg border border-neutral-200 dark:border-white/10 ${
         config.hoverBorder
       } ${
         handleCardClick ? "hover:scale-[1.02] cursor-pointer" : "cursor-default"
-      } transition-[transform_border-color_box-shadow] duration-150 ease-out-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:shadow-[0_2px_4px_rgba(0,0,0,0.08)] ${
+      } transition-[transform_border-color_box-shadow] duration-150 ease-out-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:shadow-[0_2px_4px_rgba(0,0,0,0.08)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.4)] dark:hover:shadow-[0_3px_8px_rgba(0,0,0,0.5)] ${
         config.saturation
       }`}
     >
@@ -130,20 +130,20 @@ const EventCardMin: React.FC<EventCardMinProps> = ({
           {variant === "live" && (
             <span className="inline-block w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></span>
           )}
-          <p className="text-sm font-semibold text-gray-800">{name}</p>
+          <p className="text-sm font-semibold text-gray-800 dark:text-white">{name}</p>
         </div>
         {description && (
-          <p className="text-xs text-gray-600 mb-1 line-clamp-1">
+          <p className="text-xs text-gray-600 dark:text-neutral-300 mb-1 line-clamp-1">
             {description}
           </p>
         )}
         {buildingIDs && buildingIDs.length > 0 && (
-          <div className="flex items-center text-xs text-gray-500 mb-1">
+          <div className="flex items-center text-xs text-gray-500 dark:text-neutral-400 mb-1">
             <span className="mr-1">📍</span>
             <span>Building {buildingIDs[0]}</span>
           </div>
         )}
-        <div className="flex items-center text-xs text-gray-500">
+        <div className="flex items-center text-xs text-gray-500 dark:text-neutral-400">
           <span className="mr-1 inline-grid place-content-center">
             <Clock size={12}></Clock>
           </span>
@@ -157,26 +157,26 @@ const EventCardMin: React.FC<EventCardMinProps> = ({
           {config.tag.text}
         </span>
         {isAdmin && !isApproved && eventId && (
-          <div className="flex gap-1 justify-end">
+          <div className="flex gap-1.5 justify-end mt-1">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onApprove?.(eventId);
               }}
-              className="button-depth group p-1.5 rounded-lg border border-transparent hover:border-green-500 hover:bg-green-500 transition-[transform_background-color_border-color] duration-150 ease-out-2 hover:scale-105 active:scale-95"
+              className="button-depth group p-1.5 rounded-lg bg-green-500 border border-green-600 text-white shadow-sm hover:bg-green-600 hover:border-green-700 transition-[transform_background-color_border-color] duration-150 ease-out-2 hover:scale-105 active:scale-95 cursor-pointer"
               title="Approve event"
             >
-              <Check className="w-3.5 h-3.5 group-hover:text-white transition-colors duration-150 ease-out-2" />
+              <Check className="w-4 h-4" strokeWidth={3.5} />
             </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete?.(eventId);
               }}
-              className="button-depth group p-1.5 rounded-lg border border-transparent hover:border-red-500 hover:bg-red-500 transition-[transform_background-color_border-color] duration-150 ease-out-2 hover:scale-105 active:scale-95"
+              className="button-depth group p-1.5 rounded-lg bg-red-500 border border-red-600 text-white shadow-sm hover:bg-red-600 hover:border-red-700 transition-[transform_background-color_border-color] duration-150 ease-out-2 hover:scale-105 active:scale-95 cursor-pointer"
               title="Delete event"
             >
-              <Trash className="w-3.5 h-3.5 group-hover:text-white transition-colors duration-150 ease-out-2" />
+              <Trash className="w-4 h-4" strokeWidth={2.75} />
             </button>
           </div>
         )}

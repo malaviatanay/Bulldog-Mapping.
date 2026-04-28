@@ -13,12 +13,14 @@ export default function Clock({ className = "" }: ClockProps) {
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      const hours = now.getHours();
+      const hours24 = now.getHours();
       const minutes = now.getMinutes();
-      const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      const period = hours24 >= 12 ? "PM" : "AM";
+      const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
+      const formattedTime = `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
 
       setCurrentTime(formattedTime);
-      setIsDaytime(hours >= 6 && hours < 18);
+      setIsDaytime(hours24 >= 6 && hours24 < 18);
     };
 
     updateTime();

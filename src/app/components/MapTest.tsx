@@ -7,6 +7,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 import { useMapContext } from "@/context/MapContext";
+import { useNavigation } from "@/context/NavigationContext";
 import { useSidebar } from "@/context/SidebarContext";
 import EventMarker from "./EventMarker";
 import RouteMarker, { SimpleRouteMarker } from "./schedule/RouteMarker";
@@ -72,10 +73,13 @@ export default function MapTest() {
     setDrawnPolygon,
     stopDrawing,
     pendingEventMarker,
+    setUserLocation,
+    userLocation,
     ...sdbr
   } = useMapContext();
   const { setView, setIsOpen } = useSidebar();
   const { resolvedTheme: theme } = useTheme();
+  const nav = useNavigation();
   const constructionZonesRef = useRef(constructionZones);
 
   const [center, setCenter] = useState<[number, number]>(INTITIAL_CENTER);
@@ -774,6 +778,9 @@ export default function MapTest() {
         return;
       }
 
+      // Skip the user-location stop — the "You are here" beacon already renders at this spot
+      if (stop.isUserLocation) return;
+
       const el = document.createElement("div");
       el.className = "route-marker";
       el.style.pointerEvents = "auto";
@@ -954,6 +961,7 @@ export default function MapTest() {
           pos.coords.longitude.toFixed(6),
           Math.round(pos.coords.accuracy)
         );
+        setUserLocation(lngLat);
         marker.setLngLat(lngLat);
         if (!attached) {
           marker.addTo(map);
@@ -1022,6 +1030,120 @@ export default function MapTest() {
       }
     };
   }, [pendingEventMarker]);
+
+  // Navigation camera: fit bounds during preview
+  useEffect(() => {
+    if (!mapRef.current || !mapReady) return;
+    if (!nav.isPreviewing || !nav.route) return;
+    const map = mapRef.current;
+    const coords = nav.route.coordinates;
+    if (coords.length === 0) return;
+    const bounds = coords.reduce(
+      (b, c) => b.extend(c as [number, number]),
+      new mapboxgl.LngLatBounds(coords[0], coords[0])
+    );
+    map.fitBounds(bounds, {
+      padding: { top: 90, bottom: 200, left: 60, right: 60 },
+      duration: 900,
+      maxZoom: 18,
+    });
+  }, [nav.isPreviewing, nav.route, mapReady]);
+
+  // Navigation camera: tilt into nav view on start / reset on end
+  // Only fire on enter/exit transitions or explicit recenter — not on every userLocation update.
+  const prevIsNavigatingRef = useRef(nav.isNavigating);
+  const prevPulseRef = useRef(nav.requestCenterPulse);
+  useEffect(() => {
+    if (!mapRef.current || !mapReady) return;
+    const map = mapRef.current;
+    const transitioned = prevIsNavigatingRef.current !== nav.isNavigating;
+    const recenterRequested = prevPulseRef.current !== nav.requestCenterPulse;
+    prevIsNavigatingRef.current = nav.isNavigating;
+    prevPulseRef.current = nav.requestCenterPulse;
+    if (!transitioned && !recenterRequested) return;
+    if (nav.isNavigating && userLocation) {
+      map.easeTo({
+        center: userLocation,
+        zoom: 18.8,
+        pitch: 65,
+        duration: 1100,
+        essential: true,
+      });
+      // Add 3D building extrusions for depth (only if the style supports it)
+      try {
+        if (!map.getLayer("nav-3d-buildings") && map.getSource("composite")) {
+          map.addLayer({
+            id: "nav-3d-buildings",
+            source: "composite",
+            "source-layer": "building",
+            filter: ["==", "extrude", "true"],
+            type: "fill-extrusion",
+            minzoom: 14,
+            paint: {
+              "fill-extrusion-color": theme === "dark" ? "#3a4252" : "#d8dde6",
+              "fill-extrusion-height": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                15,
+                0,
+                15.5,
+                ["get", "height"],
+              ],
+              "fill-extrusion-base": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                15,
+                0,
+                15.5,
+                ["get", "min_height"],
+              ],
+              "fill-extrusion-opacity": 0.85,
+            },
+          });
+        }
+      } catch (e) {
+        console.warn("Could not add 3D buildings layer:", e);
+      }
+    } else {
+      map.easeTo({
+        pitch: 0,
+        bearing: 0,
+        duration: 600,
+        essential: true,
+      });
+      try {
+        if (map.getLayer("nav-3d-buildings")) {
+          map.removeLayer("nav-3d-buildings");
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [nav.isNavigating, mapReady, nav.requestCenterPulse, userLocation, theme]);
+
+  // Navigation camera: follow user + update bearing toward next maneuver
+  useEffect(() => {
+    if (!mapRef.current || !mapReady) return;
+    if (!nav.isNavigating || !userLocation || !nav.route) return;
+    const map = mapRef.current;
+    const step = nav.route.steps[nav.currentStepIndex];
+    if (!step) return;
+    const [ulng, ulat] = userLocation;
+    const [mlng, mlat] = step.maneuverLocation;
+    const dx = mlng - ulng;
+    const dy = mlat - ulat;
+    // bearing: 0=N, 90=E
+    const bearing =
+      (Math.atan2(dx, dy) * 180) / Math.PI; // atan2(Δlng, Δlat) ≈ bearing in degrees
+    map.easeTo({
+      center: userLocation,
+      bearing: isFinite(bearing) ? bearing : 0,
+      duration: 600,
+      essential: true,
+    });
+  }, [nav.isNavigating, userLocation, nav.route, nav.currentStepIndex, mapReady]);
 
   return (
     <div className="absolute w-full h-full left-0 right-0 bottom-0">

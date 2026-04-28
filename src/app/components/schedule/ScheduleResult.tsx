@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, MapPin, Clock, Route, Eye, EyeOff, AlertTriangle, X, Save, Check } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Route, Eye, EyeOff, AlertTriangle, X, Save, Check, Play } from "lucide-react";
 import { useMapContext } from "@/context/MapContext";
+import { useNavigation } from "@/context/NavigationContext";
+import { useSidebar } from "@/context/SidebarContext";
 import { MatchResult } from "@/types/schedule";
 import { formatDistance, formatWalkTime } from "@/utils/pathfinding/geoUtils";
 import { saveRoute } from "@/app/actions/savedRouteActions";
@@ -23,6 +25,8 @@ interface ScheduleResultProps {
 
 export default function ScheduleResult({ results, onBack, onNewSchedule, user, buildingNames, parkingLotName, classStartTimes, classEndTimes }: ScheduleResultProps) {
   const { scheduleRoute, toggleRouteVisibility, clearScheduleRoute, flyTo, buildingPolygons } = useMapContext();
+  const { startMultiStopNavigation, startNavigation, loading: navLoading } = useNavigation();
+  const { setIsOpen } = useSidebar();
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([]);
@@ -73,6 +77,24 @@ export default function ScheduleResult({ results, onBack, onNewSchedule, user, b
     }
   };
 
+  const handleStartNavigation = async () => {
+    if (!route) return;
+    const classStops = route.stops
+      .filter((s) => !s.isUserLocation)
+      .map((s) => ({
+        id: s.building.id,
+        name: s.building.name,
+        coordinates: s.coordinates,
+      }));
+    if (classStops.length === 0) return;
+    // Use the first stop in the route as origin if there's no user-location stop;
+    // otherwise route from current location through all class stops in order.
+    const fromUser = route.stops.some((s) => s.isUserLocation);
+    setIsOpen(false);
+    await startMultiStopNavigation(classStops, fromUser);
+    startNavigation();
+  };
+
   return (
     <div className="w-full h-full flex flex-col">
       {/* Header */}
@@ -88,46 +110,42 @@ export default function ScheduleResult({ results, onBack, onNewSchedule, user, b
       </div>
 
       {/* Summary Stats */}
-      <div className="mb-4 grid grid-cols-2 gap-2">
-        <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-          <div className="flex items-center gap-2 text-green-700">
-            <MapPin className="w-4 h-4" />
-            <span className="text-sm font-medium">
-              {matchedCount} class{matchedCount !== 1 ? "es" : ""} found
-            </span>
-          </div>
+      <div className="mb-4 flex gap-2">
+        <div className="flex-1 p-3 bg-green-50 dark:bg-green-950/30 rounded-xl border border-green-200 dark:border-green-800/40 flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+          <span className="text-sm font-semibold text-green-700 dark:text-green-300">
+            {matchedCount} class{matchedCount !== 1 ? "es" : ""} found
+          </span>
         </div>
         {unmatchedCount > 0 && (
-          <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-            <div className="flex items-center gap-2 text-yellow-700">
-              <AlertTriangle className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                {unmatchedCount} unmatched
-              </span>
-            </div>
+          <div className="flex-1 p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded-xl border border-yellow-200 dark:border-yellow-800/40 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+            <span className="text-sm font-semibold text-yellow-700 dark:text-yellow-300">
+              {unmatchedCount} unmatched
+            </span>
           </div>
         )}
       </div>
 
       {/* All classes done banner */}
       {allClassesDone && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-center">
-          <p className="text-green-700 font-medium text-sm">You have no more classes today!</p>
-          <p className="text-green-600 text-xs mt-0.5">All your classes for today are done.</p>
+        <div className="mb-4 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/40 rounded-xl text-center">
+          <p className="text-green-700 dark:text-green-300 font-semibold text-sm">All classes done for today!</p>
+          <p className="text-green-600 dark:text-green-500 text-xs mt-0.5">You're all caught up.</p>
         </div>
       )}
 
       {/* Route Summary */}
       {route && route.stops.length > 1 && (
-        <div className="mb-4 p-3 bg-highlight/10 rounded-lg border border-highlight/20">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2 text-highlight font-medium">
+        <div className="mb-4 rounded-xl border border-highlight/30 dark:border-highlight/20 overflow-hidden">
+          <div className="px-3 py-2.5 bg-highlight/10 dark:bg-highlight/15 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-highlight font-semibold text-sm">
               <Route className="w-4 h-4" />
               <span>Walking Route</span>
             </div>
             <button
               onClick={toggleRouteVisibility}
-              className="p-1.5 rounded hover:bg-highlight/20 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-highlight/20 transition-colors"
               title={isVisible ? "Hide route" : "Show route"}
             >
               {isVisible ? (
@@ -137,22 +155,36 @@ export default function ScheduleResult({ results, onBack, onNewSchedule, user, b
               )}
             </button>
           </div>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="flex items-center gap-1.5 text-neutral-600">
-              <MapPin className="w-3.5 h-3.5" />
-              <span>{formatDistance(route.totalDistance)}</span>
+          <div className="px-3 py-2.5 bg-white dark:bg-[#2d2f2f] grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
+              <div className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-white/10 flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-3.5 h-3.5" />
+              </div>
+              <span className="font-medium text-neutral-700 dark:text-neutral-200">{formatDistance(route.totalDistance)}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-neutral-600">
-              <Clock className="w-3.5 h-3.5" />
-              <span>~{formatWalkTime(route.totalWalkTime)}</span>
+            <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
+              <div className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-white/10 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-3.5 h-3.5" />
+              </div>
+              <span className="font-medium text-neutral-700 dark:text-neutral-200">~{formatWalkTime(route.totalWalkTime)}</span>
             </div>
           </div>
-          <button
-            onClick={handleShowOnMap}
-            className="mt-3 w-full py-2 bg-highlight text-white text-sm rounded-lg hover:bg-highlight-hover transition-colors"
-          >
-            Show on Map
-          </button>
+          <div className="px-3 pb-3 bg-white dark:bg-[#2d2f2f] flex gap-2">
+            <button
+              onClick={handleShowOnMap}
+              className="flex-1 py-2.5 border border-neutral-200 dark:border-white/10 text-neutral-700 dark:text-neutral-200 text-sm font-medium rounded-xl hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors"
+            >
+              Show on Map
+            </button>
+            <button
+              onClick={handleStartNavigation}
+              disabled={navLoading}
+              className="button-depth flex-[1.4] py-2.5 bg-highlight text-white text-sm font-semibold rounded-xl border border-highlight-hover hover:bg-highlight-hover transition-[transform_background-color] duration-150 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-1.5"
+            >
+              <Play className="w-4 h-4 fill-white" />
+              {navLoading ? "Starting…" : "Start"}
+            </button>
+          </div>
         </div>
       )}
 
@@ -174,17 +206,17 @@ export default function ScheduleResult({ results, onBack, onNewSchedule, user, b
       <div className="mt-4 flex flex-col gap-2">
         {/* Save Route with Day Picker */}
         {user && (
-          <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-lg">
-            <p className="text-xs font-medium text-neutral-600 mb-2">Save for which days?</p>
+          <div className="p-3 bg-neutral-50 dark:bg-white/5 border border-neutral-200 dark:border-white/10 rounded-xl">
+            <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-2.5">Save for which days?</p>
             <div className="flex gap-1.5 mb-3">
               {DAYS_OF_WEEK.map((day) => (
                 <button
                   key={day}
                   onClick={() => toggleDay(day)}
-                  className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                     selectedDays.includes(day)
-                      ? "bg-highlight text-white"
-                      : "bg-white border border-neutral-300 text-neutral-600 hover:border-highlight hover:text-highlight"
+                      ? "bg-highlight text-white shadow-sm"
+                      : "bg-white dark:bg-[#2d2f2f] border border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-400 hover:border-highlight hover:text-highlight"
                   }`}
                 >
                   {DAY_LABELS[day].short}
@@ -194,46 +226,34 @@ export default function ScheduleResult({ results, onBack, onNewSchedule, user, b
             <button
               onClick={handleSaveRoute}
               disabled={isSaving || buildingNames.length === 0 || selectedDays.length === 0}
-              className={`w-full py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors ${
+              className={`button-depth w-full py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all ${
                 saveStatus === "saved"
-                  ? "bg-green-50 border border-green-200 text-green-600"
-                  : "bg-highlight text-white hover:bg-highlight-hover border border-highlight-hover"
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  ? "bg-green-600 text-white"
+                  : "bg-highlight text-white hover:bg-highlight-hover"
+              } disabled:opacity-40 disabled:cursor-not-allowed`}
             >
               {saveStatus === "saved" ? (
-                <>
-                  <Check className="w-4 h-4" />
-                  Route Saved!
-                </>
+                <><Check className="w-4 h-4" /> Route Saved!</>
               ) : isSaving ? (
-                <>
-                  <Save className="w-4 h-4 animate-pulse" />
-                  Saving...
-                </>
+                <><Save className="w-4 h-4 animate-pulse" /> Saving...</>
               ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  {selectedDays.length === 0
-                    ? "Select days to save"
-                    : `Save for ${selectedDays.map((d) => DAY_LABELS[d].short).join(", ")}`}
+                <><Save className="w-4 h-4" />
+                  {selectedDays.length === 0 ? "Select days to save" : `Save for ${selectedDays.map((d) => DAY_LABELS[d].short).join(", ")}`}
                 </>
               )}
             </button>
           </div>
         )}
         <button
-          onClick={() => {
-            clearScheduleRoute();
-            onBack();
-          }}
-          className="w-full py-2 bg-red-50 border border-red-200 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm flex items-center justify-center gap-2"
+          onClick={() => { clearScheduleRoute(); onBack(); }}
+          className="w-full py-2.5 border border-red-200 dark:border-red-800/50 text-red-500 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors text-sm font-medium flex items-center justify-center gap-2"
         >
           <X className="w-4 h-4" />
           Clear Route
         </button>
         <button
           onClick={onNewSchedule}
-          className="w-full py-2 border border-neutral-300 text-neutral-600 rounded-lg hover:bg-neutral-50 transition-colors text-sm"
+          className="w-full py-2.5 border border-neutral-200 dark:border-white/10 text-neutral-500 dark:text-neutral-400 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors text-sm font-medium"
         >
           New Schedule
         </button>

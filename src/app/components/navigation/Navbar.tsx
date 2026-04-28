@@ -21,6 +21,7 @@ export default function Navbar({ className = "", user, isAdmin}: NavbarProps) {
 
   return (
     <div
+      data-ui-chrome="navbar"
       className={`fixed slide-in-top top-0 left-0 w-full grid items-center justify-items-center z-30 pointer-events-none ${className}`}
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >

@@ -1,6 +1,7 @@
 'use client'
-import { Calendar, ArrowLeft } from "lucide-react";
+import { Calendar, ArrowLeft, Navigation } from "lucide-react";
 import { useMapContext } from "@/context/MapContext";
+import { useNavigation } from "@/context/NavigationContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { useState, useEffect } from "react";
 
@@ -10,7 +11,8 @@ type EventCardProps = {
 
 export default function EventCard({ className = "" }: EventCardProps) {
   const { selectedEvent } = useMapContext();
-  const { setView } = useSidebar();
+  const { startDirectionsTo, loading } = useNavigation();
+  const { setView, setIsOpen } = useSidebar();
   const [startTimeText, setStartTimeText] = useState('');
   const [endTimeText, setEndTimeText] = useState('');
   const [variant, setVariant] = useState<'live' | 'upcoming' | 'past'>('upcoming');
@@ -151,6 +153,22 @@ export default function EventCard({ className = "" }: EventCardProps) {
             {config.tag.text}
           </span>
         </div>
+        <button
+          onClick={() => {
+            setIsOpen(false);
+            startDirectionsTo({
+              id: selectedEvent.id,
+              kind: "event",
+              name: selectedEvent.name,
+              coordinates: [selectedEvent.longitude, selectedEvent.latitude],
+            });
+          }}
+          disabled={loading}
+          className="button-depth mt-2 w-full bg-highlight text-white py-2.5 rounded-xl border border-highlight-hover hover:bg-highlight-hover transition-[transform_background-color] duration-150 ease-out-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium text-sm"
+        >
+          <Navigation className="w-4 h-4" />
+          {loading ? "Finding route..." : "Directions"}
+        </button>
       </div>
 
       {/* Icon placeholder (similar to building fallback) */}

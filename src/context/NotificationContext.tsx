@@ -84,6 +84,16 @@ function parseTimeToToday(timeStr: string): Date | null {
   return d;
 }
 
+function formatTime12h(timeStr: string): string {
+  const parsed = parseTimeToToday(timeStr);
+  if (!parsed) return timeStr;
+  return parsed.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
 function loadFeed(): AppNotification[] {
   if (typeof window === "undefined") return [];
   try {
@@ -292,7 +302,7 @@ export function NotificationProvider({
       const buildingName = route.buildingNames[i] || "your next class";
       const t = window.setTimeout(() => {
         const title = `Class starts in ${prefs.reminderMinutes} min`;
-        const body = `${buildingName} at ${timeStr}`;
+        const body = `${buildingName} at ${formatTime12h(timeStr)}`;
         addToFeed({ type: "class", title, body });
         fireBrowserNotification(title, body);
       }, delay);
@@ -325,11 +335,12 @@ export function NotificationProvider({
       seenEventsRef.current.add(row.id);
       saveSeenEvents(seenEventsRef.current);
       const title = "New event on campus";
-      const whenText = startDate.toLocaleDateString("en-US", {
+      const whenText = startDate.toLocaleString("en-US", {
         month: "short",
         day: "numeric",
         hour: "numeric",
         minute: "2-digit",
+        hour12: true,
       });
       const body = `${row.name} — ${whenText}`;
       addToFeed({ type: "event", title, body, eventId: row.id });

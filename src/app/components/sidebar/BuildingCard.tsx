@@ -1,7 +1,10 @@
 "use client";
-import { Building } from "lucide-react";
+import { Building, Navigation } from "lucide-react";
 import Image from "next/image";
 import { useMapContext } from "@/context/MapContext";
+import { useNavigation } from "@/context/NavigationContext";
+import { useSidebar } from "@/context/SidebarContext";
+import { getCenterFromPolygon } from "@/utils/pathfinding/geoUtils";
 import Tag from "../ui/Tag";
 
 type BuildingCardProps = {
@@ -9,13 +12,36 @@ type BuildingCardProps = {
 };
 
 export default function BuildingCard({ className = "" }: BuildingCardProps) {
-  const { selectedBuilding } = useMapContext();
+  const { selectedBuilding, buildingPolygons, parkingPolygons } = useMapContext();
+  const { startDirectionsTo, loading } = useNavigation();
+  const { setIsOpen } = useSidebar();
 
   if (!selectedBuilding) {
     return null;
   }
 
   const firstImage = selectedBuilding.image_URLs?.[0];
+
+  const handleDirections = () => {
+    const allPolygons = [...buildingPolygons, ...parkingPolygons];
+    const polygon = allPolygons.find(
+      (p) => p.building_id === selectedBuilding.id
+    );
+    if (!polygon?.geojson) return;
+    try {
+      const center = getCenterFromPolygon(polygon.geojson);
+      const isParking = selectedBuilding.metaTags?.includes("parking");
+      setIsOpen(false);
+      startDirectionsTo({
+        id: selectedBuilding.id,
+        kind: isParking ? "parking" : "building",
+        name: selectedBuilding.name,
+        coordinates: center,
+      });
+    } catch (e) {
+      console.warn("Could not compute building center for directions:", e);
+    }
+  };
 
   return (
     <div key={selectedBuilding.id} className={`building-card ${className} `}>
@@ -25,6 +51,14 @@ export default function BuildingCard({ className = "" }: BuildingCardProps) {
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{selectedBuilding.name}</h2>
           <Tag variant="building" />
         </div>
+        <button
+          onClick={handleDirections}
+          disabled={loading}
+          className="button-depth mt-2 w-full bg-highlight text-white py-2.5 rounded-xl border border-highlight-hover hover:bg-highlight-hover transition-[transform_background-color] duration-150 ease-out-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium text-sm"
+        >
+          <Navigation className="w-4 h-4" />
+          {loading ? "Finding route..." : "Directions"}
+        </button>
       </div>
 
       {/* Image */}

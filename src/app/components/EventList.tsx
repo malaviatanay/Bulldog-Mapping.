@@ -241,6 +241,58 @@ export default function EventList({
         </div>
       </div>
 
+      {/* Awaiting Approval Section - Admin Only (shown in both views) */}
+      {isAdmin && unapprovedEvents.length > 0 && (
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-2 fade-in-heading">
+            <span className="inline-block w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
+            <span className="font-semibold pl-1 text-sm text-yellow-600 dark:text-yellow-400">
+              Awaiting Approval
+            </span>
+            <span className="text-xs text-gray-500 dark:text-neutral-500">
+              ({unapprovedEvents.length})
+            </span>
+          </div>
+          <ul className="flex flex-col gap-2">
+            {unapprovedEvents.map((event: Event) => {
+              const currentIndex = indexRef.current++;
+              const startDate = new Date(event.dateStart);
+              const endDate = event.dateEnd ? new Date(event.dateEnd) : null;
+
+              let variant: "live" | "upcoming" | "past" = "upcoming";
+              if (now >= startDate && (!endDate || now <= endDate)) {
+                variant = "live";
+              } else if (endDate && now > endDate) {
+                variant = "past";
+              }
+
+              return (
+                <li
+                  key={event.id}
+                  className="stagger-item"
+                  style={{ "--index": currentIndex } as React.CSSProperties}
+                >
+                  <EventCardMin
+                    dateEnd={event.dateEnd}
+                    isApproved={event.isApproved}
+                    name={event.name}
+                    buildingIDs={event.buildingIDs}
+                    dateStart={event.dateStart}
+                    description={event.description}
+                    variant={variant}
+                    onClick={() => handleEventClick(event)}
+                    isAdmin={isAdmin}
+                    eventId={event.id}
+                    onApprove={handleApprove}
+                    onDelete={handleDelete}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       {/* Calendar View */}
       {viewMode === "calendar" && (
         <div className="mb-3">
@@ -406,57 +458,6 @@ export default function EventList({
 
       {/* List View */}
       {viewMode === "list" && <>
-
-      {/* Awaiting Approval Section - Admin Only */}
-      {isAdmin && unapprovedEvents.length > 0 && (
-        <div className="mb-3">
-          <div className="flex items-center gap-2 mb-2 fade-in-heading">
-            <span className="inline-block w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
-            <span className="font-semibold pl-1 text-sm text-yellow-600 dark:text-yellow-400">
-              Awaiting Approval
-            </span>
-          </div>
-          <ul className="flex flex-col gap-2">
-            {unapprovedEvents.map((event: Event) => {
-              const currentIndex = indexRef.current++;
-              const now = new Date();
-              const startDate = new Date(event.dateStart);
-              const endDate = event.dateEnd ? new Date(event.dateEnd) : null;
-
-              // Determine variant for unapproved events
-              let variant: "live" | "upcoming" | "past" = "upcoming";
-              if (now >= startDate && (!endDate || now <= endDate)) {
-                variant = "live";
-              } else if (endDate && now > endDate) {
-                variant = "past";
-              }
-
-              return (
-                <li
-                  key={event.id}
-                  className="stagger-item"
-                  style={{ "--index": currentIndex } as React.CSSProperties}
-                >
-                  <EventCardMin
-                    dateEnd={event.dateEnd}
-                    isApproved={event.isApproved}
-                    name={event.name}
-                    buildingIDs={event.buildingIDs}
-                    dateStart={event.dateStart}
-                    description={event.description}
-                    variant={variant}
-                    onClick={() => handleEventClick(event)}
-                    isAdmin={isAdmin}
-                    eventId={event.id}
-                    onApprove={handleApprove}
-                    onDelete={handleDelete}
-                  />
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
 
       {/* Live Events Section */}
       {liveEvents.length > 0 && (

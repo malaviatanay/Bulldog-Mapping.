@@ -12,12 +12,17 @@ import {
   Navigation,
   Loader,
   RefreshCw,
+  CalendarClock,
+  Route as RouteIcon,
+  Flag,
 } from "lucide-react";
 import { useSidebar } from "@/context/SidebarContext";
 import { useMapContext } from "@/context/MapContext";
+import { useNavigation } from "@/context/NavigationContext";
 import { matchAllClasses } from "@/utils/schedule/buildingMatcher";
 import { buildCampusGraph } from "@/utils/pathfinding/campusGraph";
 import { planScheduleRoute } from "@/utils/pathfinding/routePlanner";
+import { getCenterFromPolygon } from "@/utils/pathfinding/geoUtils";
 import ScheduleResult from "./ScheduleResult";
 import { MatchResult, RouteStop, ScheduleRoute, BuildingData } from "@/types/schedule";
 import { SavedRoute, DayOfWeek, DAYS_OF_WEEK, DAY_LABELS } from "@/types/savedRoute";
@@ -31,7 +36,10 @@ interface ScheduleUploadProps {
   user: User | null;
 }
 
+type ScheduleMode = "schedule" | "directions";
+
 export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProps) {
+  const [mode, setMode] = useState<ScheduleMode>("schedule");
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [matchResults, setMatchResults] = useState<MatchResult[] | null>(null);
@@ -41,33 +49,42 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
   const [startFromParking, setStartFromParking] = useState(false);
   const [selectedParkingLot, setSelectedParkingLot] = useState("");
 
+  // Quick directions state
+  const [dirFromMode, setDirFromMode] = useState<"location" | "building">("location");
+  const [dirFromBuilding, setDirFromBuilding] = useState("");
+  const [dirTo, setDirTo] = useState("");
+  const [dirError, setDirError] = useState<string | null>(null);
+  const [dirProcessing, setDirProcessing] = useState(false);
+
   // Saved routes state
   const [selectedDay, setSelectedDay] = useState<DayOfWeek | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Live location state
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-  const [locationStatus, setLocationStatus] = useState<"pending" | "granted" | "denied">("pending");
+  const { setView, setIsOpen } = useSidebar();
+  const { buildings, buildingPolygons, parkingLots: parkingLotsData, parkingPolygons, constructionZones, setScheduleRoute, clearScheduleRoute, userLocation } = useMapContext();
 
+  // Derive locationStatus from the shared userLocation so this view stays in sync
+  // with MapTest's watchPosition instead of running its own one-shot fetch that
+  // can race the GPS fix and get stuck in "denied".
+  const [locationDenied, setLocationDenied] = useState(false);
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setLocationStatus("denied");
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setLocationDenied(true);
       return;
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserLocation([pos.coords.longitude, pos.coords.latitude]);
-        setLocationStatus("granted");
-      },
-      () => {
-        setLocationStatus("denied");
-      },
-      { timeout: 8000, maximumAge: 60000 }
-    );
+    if (typeof navigator.permissions?.query === "function") {
+      navigator.permissions
+        .query({ name: "geolocation" })
+        .then((p) => setLocationDenied(p.state === "denied"))
+        .catch(() => {});
+    }
   }, []);
-
-  const { setView } = useSidebar();
-  const { buildings, buildingPolygons, parkingLots: parkingLotsData, parkingPolygons, constructionZones, setScheduleRoute } = useMapContext();
+  const locationStatus: "pending" | "granted" | "denied" = locationDenied
+    ? "denied"
+    : userLocation
+      ? "granted"
+      : "pending";
+  const { startDirectionsTo: navStartDirectionsTo, startDirectionsBetween: navStartDirectionsBetween, clearDirections: navClearDirections } = useNavigation();
 
   const parkingLots = parkingLotsData.map((lot) => lot.name);
 
@@ -343,6 +360,156 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
       .map((b) => b.name);
   };
 
+  // Suggestions for directions: combines buildings + parking lots
+  const getLocationSuggestions = (input: string): string[] => {
+    if (input.length < 2) return [];
+    const normalized = input.toLowerCase();
+    const buildingMatches = buildings
+      .filter((b) => b.name.toLowerCase().includes(normalized))
+      .map((b) => b.name);
+    const parkingMatches = parkingLotsData
+      .filter((p) => p.name.toLowerCase().includes(normalized))
+      .map((p) => p.name);
+    return [...buildingMatches, ...parkingMatches].slice(0, 8);
+  };
+
+  const parkingLotToBuildingData = (lot: (typeof parkingLotsData)[number]): BuildingData =>
+    ({
+      id: lot.id,
+      name: lot.name,
+      address: null,
+      daysOpen: null,
+      description: lot.description || "Parking lot",
+      eventIDs: null,
+      floors: 1,
+      hoursOpen: "24/7",
+      image_URLs: [],
+      metaTags: ["parking"],
+      otherNames: [],
+      rooms: null,
+      website: null,
+    }) as unknown as BuildingData;
+
+  const computeDirections = async () => {
+    setDirError(null);
+
+    const toName = dirTo.trim();
+    if (!toName) {
+      setDirError("Please enter a destination");
+      return;
+    }
+    const fromName = dirFromMode === "building" ? dirFromBuilding.trim() : "";
+    if (dirFromMode === "building" && !fromName) {
+      setDirError("Please enter a starting location");
+      return;
+    }
+    if (dirFromMode === "location" && !userLocation) {
+      setDirError("Your location isn't available — pick a starting building instead");
+      return;
+    }
+
+    setDirProcessing(true);
+    try {
+      // Match the names to actual buildings/parking lots
+      const namesToMatch = fromName ? [fromName, toName] : [toName];
+      const parsedClasses = namesToMatch.map((name) => ({
+        id: Math.random().toString(36).substring(2, 9),
+        courseCode: "",
+        courseName: undefined,
+        daysOfWeek: [],
+        startTime: "",
+        endTime: "",
+        buildingRaw: name,
+        roomRaw: "",
+        rawText: name,
+      }));
+
+      const combinedBuildings: BuildingData[] = [
+        ...buildings,
+        ...parkingLotsData.map(parkingLotToBuildingData),
+      ];
+      const allPolygons = [...buildingPolygons, ...parkingPolygons];
+      const results = matchAllClasses(parsedClasses, combinedBuildings);
+      const unmatchedIndex = results.findIndex((r) => r.match === null);
+      if (unmatchedIndex !== -1) {
+        setDirError(
+          `Could not find "${namesToMatch[unmatchedIndex]}" — try a different name`
+        );
+        setDirProcessing(false);
+        return;
+      }
+
+      // Resolve coordinates (polygon center) for each matched place
+      const resolveCoords = (
+        match: NonNullable<(typeof results)[number]["match"]>
+      ): [number, number] | null => {
+        const polygon = allPolygons.find((p) => p.building_id === match.building.id);
+        if (!polygon?.geojson) return null;
+        try {
+          return getCenterFromPolygon(polygon.geojson);
+        } catch {
+          return null;
+        }
+      };
+
+      if (fromName) {
+        const fromMatch = results[0].match!;
+        const toMatch = results[1].match!;
+        const fromCoords = resolveCoords(fromMatch);
+        const toCoords = resolveCoords(toMatch);
+        if (!fromCoords || !toCoords) {
+          setDirError("Could not resolve those locations on the map");
+          setDirProcessing(false);
+          return;
+        }
+        const isParking = (m: typeof fromMatch) =>
+          m.building.metaTags?.includes("parking");
+        await navStartDirectionsBetween(
+          { name: fromMatch.building.name, coordinates: fromCoords },
+          {
+            id: toMatch.building.id,
+            kind: isParking(toMatch) ? "parking" : "building",
+            name: toMatch.building.name,
+            coordinates: toCoords,
+          }
+        );
+      } else {
+        const toMatch = results[0].match!;
+        const toCoords = resolveCoords(toMatch);
+        if (!toCoords) {
+          setDirError("Could not resolve that destination on the map");
+          setDirProcessing(false);
+          return;
+        }
+        const isParking = toMatch.building.metaTags?.includes("parking");
+        await navStartDirectionsTo({
+          id: toMatch.building.id,
+          kind: isParking ? "parking" : "building",
+          name: toMatch.building.name,
+          coordinates: toCoords,
+        });
+      }
+
+      // Collapse the sidebar so the bottom card has visual focus
+      setIsOpen(false);
+    } catch (err) {
+      setDirError(err instanceof Error ? err.message : "Failed to compute directions");
+    } finally {
+      setDirProcessing(false);
+    }
+  };
+
+  const switchMode = (next: ScheduleMode) => {
+    if (next === mode) return;
+    // Clear the map so the other mode's route isn't left over
+    clearScheduleRoute();
+    navClearDirections();
+    setDirError(null);
+    setMatchResults(null);
+    setError(null);
+    setMode(next);
+  };
+
   const processManualEntry = () => {
     const validEntries = buildingEntries.filter((e) => e.building.trim().length > 0);
     if (validEntries.length === 0) {
@@ -395,7 +562,7 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
   return (
     <div className="w-full h-full flex flex-col">
       {/* Header */}
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-3 flex items-center gap-2">
         <button
           type="button"
           onClick={() => setView("search")}
@@ -405,6 +572,156 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
         </button>
         <h2 className="text-xl font-semibold">Plan Your Route</h2>
       </div>
+
+      {/* Mode Tabs */}
+      <div className="flex gap-1 mb-4 bg-neutral-100 dark:bg-white/5 rounded-lg p-1">
+        <button
+          onClick={() => switchMode("schedule")}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs font-medium transition-colors duration-150 cursor-pointer ${
+            mode === "schedule"
+              ? "bg-white dark:bg-[#363838] shadow-sm text-gray-900 dark:text-gray-100"
+              : "text-gray-500 dark:text-neutral-400 hover:text-gray-700 dark:hover:text-neutral-200"
+          }`}
+        >
+          <CalendarClock className="w-3.5 h-3.5" />
+          Class Route
+        </button>
+        <button
+          onClick={() => switchMode("directions")}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs font-medium transition-colors duration-150 cursor-pointer ${
+            mode === "directions"
+              ? "bg-white dark:bg-[#363838] shadow-sm text-gray-900 dark:text-gray-100"
+              : "text-gray-500 dark:text-neutral-400 hover:text-gray-700 dark:hover:text-neutral-200"
+          }`}
+        >
+          <RouteIcon className="w-3.5 h-3.5" />
+          Quick Directions
+        </button>
+      </div>
+
+      {mode === "directions" ? (
+        <div className="flex-1 flex flex-col min-h-0">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-3">
+            Get walking directions between any two campus locations.
+          </p>
+
+          {/* From */}
+          <div className="mb-3">
+            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5 uppercase tracking-wide">
+              From
+            </label>
+            <div className="flex gap-1 mb-2 bg-neutral-100 dark:bg-white/5 rounded-lg p-0.5">
+              <button
+                onClick={() => setDirFromMode("location")}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                  dirFromMode === "location"
+                    ? "bg-white dark:bg-[#363838] shadow-sm text-gray-900 dark:text-gray-100"
+                    : "text-gray-500 dark:text-neutral-400"
+                }`}
+              >
+                <Navigation className="w-3 h-3" />
+                My Location
+              </button>
+              <button
+                onClick={() => setDirFromMode("building")}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                  dirFromMode === "building"
+                    ? "bg-white dark:bg-[#363838] shadow-sm text-gray-900 dark:text-gray-100"
+                    : "text-gray-500 dark:text-neutral-400"
+                }`}
+              >
+                <MapPin className="w-3 h-3" />
+                Pick a place
+              </button>
+            </div>
+            {dirFromMode === "location" ? (
+              <div
+                className={`px-3 py-2 rounded-lg flex items-center gap-2 text-xs font-medium border ${
+                  locationStatus === "granted"
+                    ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950/30 dark:border-blue-800/50 dark:text-blue-300"
+                    : "bg-neutral-100 border-neutral-200 text-neutral-500 dark:bg-white/5 dark:border-white/10 dark:text-neutral-400"
+                }`}
+              >
+                <Navigation
+                  className={`w-3.5 h-3.5 flex-shrink-0 ${
+                    locationStatus === "granted" ? "text-blue-500 dark:text-blue-400" : "text-neutral-400"
+                  }`}
+                />
+                {locationStatus === "granted" && "Using your live location"}
+                {locationStatus === "denied" && "Location unavailable — switch to Pick a place"}
+                {locationStatus === "pending" && "Getting your location..."}
+              </div>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  value={dirFromBuilding}
+                  onChange={(e) => setDirFromBuilding(e.target.value)}
+                  placeholder="e.g., Student Union, Lot P10"
+                  className="w-full px-3 py-2 border border-neutral-300 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-highlight focus:border-transparent text-sm bg-white dark:bg-[#2d2f2f] dark:text-neutral-100 dark:placeholder-neutral-500"
+                  list="directions-from-suggestions"
+                />
+                <datalist id="directions-from-suggestions">
+                  {getLocationSuggestions(dirFromBuilding).map((s) => (
+                    <option key={s} value={s} />
+                  ))}
+                </datalist>
+              </>
+            )}
+          </div>
+
+          {/* To */}
+          <div className="mb-3">
+            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5 uppercase tracking-wide">
+              To
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-highlight text-white flex items-center justify-center flex-shrink-0">
+                <Flag className="w-3 h-3" />
+              </span>
+              <input
+                type="text"
+                value={dirTo}
+                onChange={(e) => setDirTo(e.target.value)}
+                placeholder="Search for any building or parking"
+                className="flex-1 px-3 py-2 border border-neutral-300 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-highlight focus:border-transparent text-sm bg-white dark:bg-[#2d2f2f] dark:text-neutral-100 dark:placeholder-neutral-500"
+                list="directions-to-suggestions"
+              />
+              <datalist id="directions-to-suggestions">
+                {getLocationSuggestions(dirTo).map((s) => (
+                  <option key={s} value={s} />
+                ))}
+              </datalist>
+            </div>
+          </div>
+
+          {dirError && (
+            <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-start gap-2 dark:bg-red-950/30 dark:border-red-800/50 dark:text-red-400">
+              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <span>{dirError}</span>
+            </div>
+          )}
+
+          <button
+            onClick={computeDirections}
+            disabled={dirProcessing || !dirTo.trim()}
+            className="button-depth w-full bg-highlight text-white py-2.5 rounded-xl border border-highlight-hover hover:bg-highlight-hover transition-[transform_background-color] duration-150 ease-out-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 font-medium text-sm"
+          >
+            {dirProcessing ? (
+              <>
+                <Loader className="w-4 h-4 animate-spin" />
+                Finding route...
+              </>
+            ) : (
+              <>
+                <RouteIcon className="w-4 h-4" />
+                Get Directions
+              </>
+            )}
+          </button>
+
+        </div>
+      ) : (<>
 
       {/* Location Status */}
       <div className={`mb-3 px-3 py-2 rounded-lg flex items-center gap-2 text-xs font-medium border ${
@@ -618,6 +935,7 @@ export default function ScheduleUpload({ savedRoutes, user }: ScheduleUploadProp
           </button>
         )}
       </div>
+      </>)}
     </div>
   );
 }

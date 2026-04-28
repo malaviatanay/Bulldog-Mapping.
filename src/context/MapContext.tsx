@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useCallback } from "react";
 import { Tables } from "@/types/supabase";
 import { ScheduleRoute, MatchResult } from "@/types/schedule";
 import { ConstructionZone } from "@/types/constructionZone";
@@ -52,6 +52,8 @@ type MapContextType = {
   drawingMode: DrawingModeState;
   pendingEventMarker: [number, number] | null;
   setPendingEventMarker: (coords: [number, number] | null) => void;
+  userLocation: [number, number] | null;
+  setUserLocation: (coords: [number, number] | null) => void;
   setLastClickedCords: (cords: [number, number] | null) => void;
   setMapPointerEvents: (mode: MapPointerEvents) => void;
   setSelectedBuilding: (building: Building | null) => void;
@@ -122,63 +124,67 @@ export function MapProvider({
   const [pendingEventMarker, setPendingEventMarker] = useState<
     [number, number] | null
   >(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
 
-  const flyTo = (lng: number, lat: number, zoom?: number) => {
+  const flyTo = useCallback((lng: number, lat: number, zoom?: number) => {
     setFlyToTarget({ lng, lat, zoom });
-  };
+  }, []);
 
-  const setScheduleRoute = (route: ScheduleRoute | null, matchResults?: MatchResult[] | null) => {
-    setScheduleRouteState({
-      route,
-      isVisible: route !== null,
-      highlightedStop: null,
-      matchResults: matchResults ?? null,
-    });
-  };
+  const setScheduleRoute = useCallback(
+    (route: ScheduleRoute | null, matchResults?: MatchResult[] | null) => {
+      setScheduleRouteState({
+        route,
+        isVisible: route !== null,
+        highlightedStop: null,
+        matchResults: matchResults ?? null,
+      });
+    },
+    []
+  );
 
-  const clearScheduleRoute = () => {
+  const clearScheduleRoute = useCallback(() => {
     setScheduleRouteState({
       route: null,
       isVisible: false,
       highlightedStop: null,
       matchResults: null,
     });
-  };
+  }, []);
 
-  const highlightRouteStop = (stopIndex: number | null) => {
+  const highlightRouteStop = useCallback((stopIndex: number | null) => {
     setScheduleRouteState((prev) => ({
       ...prev,
       highlightedStop: stopIndex,
     }));
-  };
+  }, []);
 
-  const toggleRouteVisibility = () => {
+  const toggleRouteVisibility = useCallback(() => {
     setScheduleRouteState((prev) => ({
       ...prev,
       isVisible: !prev.isVisible,
     }));
-  };
+  }, []);
 
-  const startDrawing = () => {
+  const startDrawing = useCallback(() => {
     setDrawingModeState({
       isActive: true,
       drawnPolygon: null,
     });
-  };
+  }, []);
 
-  const stopDrawing = () => {
+  const stopDrawing = useCallback(() => {
     setDrawingModeState((prev) => ({
       ...prev,
       isActive: false,
     }));
-  };
+  }, []);
 
-  const setDrawnPolygon = (polygon: Feature<Polygon> | null) => {
+  const setDrawnPolygon = useCallback((polygon: Feature<Polygon> | null) => {
     setDrawingModeState((prev) => ({
       ...prev,
       drawnPolygon: polygon,
     }));
-  };
+  }, []);
 
   const value: MapContextType = {
     buildings,
@@ -199,6 +205,8 @@ export function MapProvider({
     drawingMode,
     pendingEventMarker,
     setPendingEventMarker,
+    userLocation,
+    setUserLocation,
     setLastClickedCords,
     setMapPointerEvents,
     setSelectedBuilding,

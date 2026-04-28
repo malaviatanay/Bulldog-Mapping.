@@ -457,6 +457,11 @@ html {
   }
 }
 
+/* Hide sidebar and navbar during turn-by-turn navigation */
+body.navigating [data-ui-chrome] {
+  display: none !important;
+}
+
 /* User location marker ("You are here") — minimal navy dot */
 .user-location-marker {
   position: relative;

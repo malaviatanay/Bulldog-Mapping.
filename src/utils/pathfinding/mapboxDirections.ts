@@ -9,6 +9,20 @@ export interface DirectionsResult {
   duration: number; // seconds
 }
 
+export interface NavigationStep {
+  instruction: string; // short text like "Turn left onto Maple Ave"
+  distance: number; // meters
+  duration: number; // seconds
+  maneuverLocation: [number, number]; // where the maneuver happens
+  maneuverType?: string; // e.g. "turn", "depart", "arrive"
+  modifier?: string; // e.g. "left", "right", "straight"
+  geometry: [number, number][]; // coords along this step
+}
+
+export interface NavigationResult extends DirectionsResult {
+  steps: NavigationStep[];
+}
+
 /**
  * Get walking directions between two points using Mapbox Directions API
  */
@@ -91,6 +105,55 @@ export async function getMultiStopWalkingRoute(
     };
   } catch (error) {
     console.error("Error fetching walking directions:", error);
+    return null;
+  }
+}
+
+/**
+ * Get walking directions with turn-by-turn steps for navigation mode.
+ */
+export async function getNavigationRoute(
+  waypoints: [number, number][]
+): Promise<NavigationResult | null> {
+  if (waypoints.length < 2) return null;
+
+  try {
+    const coordsString = waypoints.map((wp) => `${wp[0]},${wp[1]}`).join(";");
+    const response = await fetch(
+      `/api/directions?coordinates=${coordsString}&steps=true`
+    );
+    if (!response.ok) {
+      console.warn(`Directions API error: ${response.status}`);
+      return null;
+    }
+    const data = await response.json();
+    if (!data.routes || data.routes.length === 0) return null;
+
+    const route = data.routes[0];
+    const steps: NavigationStep[] = [];
+    for (const leg of route.legs ?? []) {
+      for (const step of leg.steps ?? []) {
+        const maneuver = step.maneuver;
+        steps.push({
+          instruction: maneuver.instruction ?? "Continue",
+          distance: step.distance,
+          duration: step.duration,
+          maneuverLocation: maneuver.location as [number, number],
+          maneuverType: maneuver.type,
+          modifier: maneuver.modifier,
+          geometry: (step.geometry?.coordinates ?? []) as [number, number][],
+        });
+      }
+    }
+
+    return {
+      coordinates: route.geometry.coordinates as [number, number][],
+      distance: route.distance,
+      duration: route.duration,
+      steps,
+    };
+  } catch (error) {
+    console.error("Error fetching navigation route:", error);
     return null;
   }
 }

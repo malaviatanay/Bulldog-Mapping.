@@ -29,6 +29,7 @@ export default function Sidebar({ user, isAdmin, savedRoutes }: SidebarProps) {
 
   return (
     <aside
+      data-ui-chrome="sidebar"
       className={`absolute p-0 mt-19 sm:mt-0 h-[calc(100dvh-78px)] sm:py-4 sm:pl-4 sm:top-0 transition-transform duration-300 ease-out-3 w-full sm:w-fit z-40 left-0 sm:h-full top-0 ${
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
