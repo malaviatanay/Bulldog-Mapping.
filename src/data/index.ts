@@ -26,9 +26,46 @@ export async function getBuildings() {
 export async function getEvents() {
   const supabase = await createClient();
 
-  const { data, error } = await supabase.from("event").select("*");
-  if (error) throw error;
+  // Determine whether the caller can see un-approved events.
+  // Approved events are public; un-approved ones are only visible to admins
+  // (so they can moderate) and to the event's own creator.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
+  let isAdmin = false;
+  if (user) {
+    const { data: adminRow } = await supabase
+      .from("campusAdmin")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    isAdmin = !!adminRow?.user_id;
+  }
+
+  if (isAdmin) {
+    // Admins see everything for moderation
+    const { data, error } = await supabase.from("event").select("*");
+    if (error) throw error;
+    return data;
+  }
+
+  if (user) {
+    // Logged-in non-admin: approved events plus their own pending events
+    const { data, error } = await supabase
+      .from("event")
+      .select("*")
+      .or(`isApproved.eq.true,creatorID.eq.${user.id}`);
+    if (error) throw error;
+    return data;
+  }
+
+  // Anonymous: approved events only
+  const { data, error } = await supabase
+    .from("event")
+    .select("*")
+    .eq("isApproved", true);
+  if (error) throw error;
   return data;
 }
 

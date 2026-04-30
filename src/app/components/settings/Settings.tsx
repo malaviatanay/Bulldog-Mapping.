@@ -75,8 +75,20 @@ function AboutSection({ user }: { user: User | null }) {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (!file.type.startsWith("image/")) {
-      setMessage({ type: "error", text: "Please select an image file." });
+    // Allowlist concrete raster types only — SVG can carry executable JS via
+    // <script> blocks and is unsafe to host on the same origin we render from.
+    const ALLOWED_TYPES: Record<string, string> = {
+      "image/png": "png",
+      "image/jpeg": "jpg",
+      "image/jpg": "jpg",
+      "image/webp": "webp",
+    };
+    const allowedExt = ALLOWED_TYPES[file.type.toLowerCase()];
+    if (!allowedExt) {
+      setMessage({
+        type: "error",
+        text: "Please use a PNG, JPEG, or WEBP image.",
+      });
       return;
     }
 
@@ -85,16 +97,45 @@ function AboutSection({ user }: { user: User | null }) {
       return;
     }
 
+    // Verify the file's magic bytes match the claimed type — a malicious file
+    // can claim image/png but actually be SVG or HTML.
+    const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+    const matchesPng =
+      head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47;
+    const matchesJpeg = head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff;
+    const matchesWebp =
+      head[0] === 0x52 &&
+      head[1] === 0x49 &&
+      head[2] === 0x46 &&
+      head[3] === 0x46 &&
+      head[8] === 0x57 &&
+      head[9] === 0x45 &&
+      head[10] === 0x42 &&
+      head[11] === 0x50;
+    const validHeader =
+      (allowedExt === "png" && matchesPng) ||
+      (allowedExt === "jpg" && matchesJpeg) ||
+      (allowedExt === "webp" && matchesWebp);
+    if (!validHeader) {
+      setMessage({
+        type: "error",
+        text: "That file doesn't look like a valid image.",
+      });
+      return;
+    }
+
     setUploading(true);
     setMessage(null);
 
     try {
-      const fileExt = file.name.split(".").pop();
-      const filePath = `${user.id}/avatar.${fileExt}`;
+      const filePath = `${user.id}/avatar.${allowedExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, {
+          upsert: true,
+          contentType: file.type,
+        });
 
       if (uploadError) {
         setMessage({ type: "error", text: "Failed to upload image. Please try again." });

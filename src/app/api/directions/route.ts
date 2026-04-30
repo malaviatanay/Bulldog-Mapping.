@@ -1,12 +1,40 @@
 import { NextRequest } from "next/server";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
+
+// Rough caps — Mapbox itself only accepts up to 25 waypoints, so cap input
+// length to a value well above that to allow query overhead but reject obvious
+// abuse like multi-megabyte payloads.
+const MAX_COORDINATES_LEN = 1500;
 
 export async function GET(request: NextRequest) {
+  // Rate limit by IP. Generous because route previews trigger several requests
+  // per user session, but still caps cost-burn from automated scrapers.
+  const ip = getClientIp(request.headers);
+  const rl = rateLimit(`directions:${ip}`, 30, 90);
+  if (!rl.allowed) {
+    return Response.json(
+      { error: "Too many requests" },
+      {
+        status: 429,
+        headers: { "Retry-After": String(Math.ceil(rl.resetMs / 1000)) },
+      }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const coordinates = searchParams.get("coordinates");
   const steps = searchParams.get("steps") === "true";
 
   if (!coordinates) {
     return Response.json({ error: "Missing coordinates" }, { status: 400 });
+  }
+  if (coordinates.length > MAX_COORDINATES_LEN) {
+    return Response.json({ error: "Coordinates too long" }, { status: 400 });
+  }
+  // Reject anything that doesn't look like the Mapbox waypoint format
+  // (lng,lat;lng,lat;... — digits, dots, commas, semicolons, minus signs only)
+  if (!/^[-0-9.,;\s]+$/.test(coordinates)) {
+    return Response.json({ error: "Invalid coordinates" }, { status: 400 });
   }
 
   const accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;

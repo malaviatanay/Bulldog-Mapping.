@@ -1,8 +1,15 @@
 import Groq from "groq-sdk";
 import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createClient as createServerClient } from "@/utils/supabase/server";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "" });
+
+// Hard caps to prevent prompt-stuffing attacks
+const MAX_MESSAGES = 30;
+const MAX_TOTAL_CHARS = 8000;
+const MAX_SINGLE_MESSAGE_CHARS = 4000;
 
 const BASE_SYSTEM_PROMPT = `You are the Bulldog Campus Assistant — a friendly, knowledgeable AI helper for California State University, Fresno (Fresno State / CSU Fresno). You help students, faculty, staff, and visitors with ANY question related to Fresno State.
 
@@ -130,10 +137,53 @@ async function getBuildingContext(): Promise<string> {
 
 export async function POST(request: NextRequest) {
   try {
+    // Require an authenticated session to use the chatbot. Without this anyone
+    // can call the endpoint and burn the Groq quota.
+    const supabase = await createServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return new Response("Authentication required", { status: 401 });
+    }
+
+    // Rate limit by user id + IP. 12 burst, 20/min steady-state.
+    const ip = getClientIp(request.headers);
+    const rl = rateLimit(`chat:${user.id}:${ip}`, 12, 20);
+    if (!rl.allowed) {
+      return new Response("Too many requests", {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil(rl.resetMs / 1000)),
+        },
+      });
+    }
+
     const { messages } = (await request.json()) as { messages: ChatMessage[] };
 
     if (!messages || messages.length === 0) {
       return new Response("Messages are required", { status: 400 });
+    }
+
+    // Validate input size so an attacker can't pass huge payloads to Groq
+    if (messages.length > MAX_MESSAGES) {
+      return new Response("Too many messages in conversation", { status: 400 });
+    }
+    let totalChars = 0;
+    for (const m of messages) {
+      if (
+        typeof m?.content !== "string" ||
+        (m.role !== "user" && m.role !== "assistant")
+      ) {
+        return new Response("Malformed message", { status: 400 });
+      }
+      if (m.content.length > MAX_SINGLE_MESSAGE_CHARS) {
+        return new Response("Message too long", { status: 400 });
+      }
+      totalChars += m.content.length;
+    }
+    if (totalChars > MAX_TOTAL_CHARS) {
+      return new Response("Conversation too long", { status: 400 });
     }
 
     if (!process.env.GROQ_API_KEY) {

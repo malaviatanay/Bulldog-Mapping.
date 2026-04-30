@@ -86,11 +86,45 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
 
   const isPreviewing = destination !== null && route !== null && !isNavigating;
 
+  // Mirror `route` into a ref so callbacks created in earlier renders can read
+  // the latest value. Without this, `startNavigation` captured before
+  // `setRoute` is observed would early-return on a stale null.
+  const routeRef = useRef(route);
+  useEffect(() => {
+    routeRef.current = route;
+  }, [route]);
+
   // Keep latest setScheduleRoute in a ref so we don't have to depend on its identity
   const setScheduleRouteRef = useRef(setScheduleRoute);
   useEffect(() => {
     setScheduleRouteRef.current = setScheduleRoute;
   }, [setScheduleRoute]);
+
+  /**
+   * Ensure the rendered polyline visually starts at `start` and ends at `end`.
+   * Mapbox snaps requests to its road network, so the returned geometry can
+   * begin a few meters from the user's actual GPS position (or end short of
+   * the destination centroid). We bridge that gap by prepending/appending the
+   * actual coordinates when there's a noticeable gap.
+   */
+  const ensureRouteEndpoints = useCallback(
+    (
+      coords: [number, number][],
+      start: [number, number],
+      end: [number, number]
+    ): [number, number][] => {
+      if (coords.length === 0) return [start, end];
+      const first = coords[0];
+      const last = coords[coords.length - 1];
+      const startGap = haversineDistance(first, start);
+      const endGap = haversineDistance(last, end);
+      let out = coords;
+      if (startGap > 5) out = [start, ...out];
+      if (endGap > 5) out = [...out, end];
+      return out;
+    },
+    []
+  );
 
   const pushRouteToMap = useCallback(
     (navRoute: NavigationResult) => {
@@ -145,8 +179,16 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
           setRoute(null);
           return;
         }
-        setRoute(navRoute);
-        pushRouteToMap(navRoute);
+        const bridged = {
+          ...navRoute,
+          coordinates: ensureRouteEndpoints(
+            navRoute.coordinates,
+            userLocation,
+            dest.coordinates
+          ),
+        };
+        setRoute(bridged);
+        pushRouteToMap(bridged);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch directions");
       } finally {
@@ -156,6 +198,7 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
     [
       userLocation,
       pushRouteToMap,
+      ensureRouteEndpoints,
       buildings,
       parkingLots,
       buildingPolygons,
@@ -191,8 +234,16 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
           setRoute(null);
           return;
         }
-        setRoute(navRoute);
-        pushRouteToMap(navRoute);
+        const bridged = {
+          ...navRoute,
+          coordinates: ensureRouteEndpoints(
+            navRoute.coordinates,
+            originLoc.coordinates,
+            dest.coordinates
+          ),
+        };
+        setRoute(bridged);
+        pushRouteToMap(bridged);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch directions");
       } finally {
@@ -201,6 +252,7 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
     },
     [
       pushRouteToMap,
+      ensureRouteEndpoints,
       buildings,
       parkingLots,
       buildingPolygons,
@@ -265,8 +317,18 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
           setRoute(null);
           return;
         }
-        setRoute(navRoute);
-        pushRouteToMap(navRoute);
+        const startCoord = segmentInputs[0].coords;
+        const endCoord = segmentInputs[segmentInputs.length - 1].coords;
+        const bridged = {
+          ...navRoute,
+          coordinates: ensureRouteEndpoints(
+            navRoute.coordinates,
+            startCoord,
+            endCoord
+          ),
+        };
+        setRoute(bridged);
+        pushRouteToMap(bridged);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch route");
       } finally {
@@ -276,6 +338,7 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
     [
       userLocation,
       pushRouteToMap,
+      ensureRouteEndpoints,
       buildings,
       parkingLots,
       buildingPolygons,
@@ -296,11 +359,11 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
   }, [clearScheduleRoute]);
 
   const startNavigation = useCallback(() => {
-    if (!route) return;
+    if (!routeRef.current) return;
     setCurrentStepIndex(0);
     setIsNavigating(true);
     setRequestCenterPulse((p) => p + 1);
-  }, [route]);
+  }, []);
 
   const endNavigation = useCallback(() => {
     setIsNavigating(false);

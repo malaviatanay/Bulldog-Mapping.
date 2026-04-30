@@ -486,12 +486,37 @@ export default function MapTest() {
           },
         });
 
-        // Helper to build popup HTML from zone properties
+        // Helper to build popup HTML from zone properties.
+        // CRITICAL: name and description come from user input — escape before
+        // interpolating into HTML to prevent stored XSS via setHTML().
+        const escapeHtml = (input: unknown): string => {
+          if (input === null || input === undefined) return "";
+          return String(input)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+        };
         const buildPopupHTML = (props: Record<string, unknown>) => {
-          const name = (props?.name as string) ?? "Construction Zone";
-          const description = (props?.description as string) ?? null;
-          const startDate = props?.startDate ? new Date(props.startDate as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
-          const endDate = props?.endDate ? new Date(props.endDate as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
+          const name = escapeHtml(props?.name ?? "Construction Zone");
+          const description = props?.description
+            ? escapeHtml(props.description)
+            : null;
+          const startDate = props?.startDate
+            ? new Date(props.startDate as string).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+            : null;
+          const endDate = props?.endDate
+            ? new Date(props.endDate as string).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+            : null;
           const isDark = !!document.querySelector(".dark");
 
           const bg = isDark ? "#2d2f2f" : "#ffffff";
@@ -506,7 +531,7 @@ export default function MapTest() {
             ? `<div style="margin-top:10px;padding:6px 8px;background:${dateBg};border:1px solid ${dateBorder};border-radius:6px;display:flex;align-items:center;gap:6px;">
                 <span style="font-size:13px;">📅</span>
                 <span style="font-size:11px;font-weight:600;color:${dateColor};">
-                  ${startDate}${endDate ? ` – ${endDate}` : ""}
+                  ${escapeHtml(startDate)}${endDate ? ` – ${escapeHtml(endDate)}` : ""}
                 </span>
               </div>`
             : "";

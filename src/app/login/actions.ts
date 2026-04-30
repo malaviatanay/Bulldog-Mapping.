@@ -40,7 +40,7 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
-    console.error("Login error:", error);
+    console.error("Login error:", error.message);
     // Return error message instead of redirecting
     return { error: error.message };
   }
@@ -74,11 +74,9 @@ export async function signup(formData: FormData) {
   });
 
   if (error) {
-    console.error("Signup error:", error);
+    console.error("Signup error:", error.message);
     return { error: error.message };
   }
-
-  console.log("Signup successful:", signupData);
 
   // If email confirmation is required, inform the user
   if (signupData.user && !signupData.session) {
