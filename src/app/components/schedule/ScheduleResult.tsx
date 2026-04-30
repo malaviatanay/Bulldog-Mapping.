@@ -131,7 +131,7 @@ export default function ScheduleResult({ results, onBack, onNewSchedule, user, b
       {allClassesDone && (
         <div className="mb-4 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/40 rounded-xl text-center">
           <p className="text-green-700 dark:text-green-300 font-semibold text-sm">All classes done for today!</p>
-          <p className="text-green-600 dark:text-green-500 text-xs mt-0.5">You're all caught up.</p>
+          <p className="text-green-600 dark:text-green-500 text-xs mt-0.5">You&apos;re all caught up.</p>
         </div>
       )}
 
